@@ -116,7 +116,7 @@ for file in csv_files:
         print("File is not a copy.")
     cksum_prev = cksum
     fid.writelines([tail,"    ", cksum,"\n"])
-    file_prev = file
+    file_prev = tail
     
 fid.close()    
 # End of checksum function
