@@ -1,3 +1,5 @@
+
+# -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
 import os 
@@ -101,5 +103,5 @@ def checksum(csv_files, path):
         fid.writelines([tail,"    ", cksum,"\n"])
         file_prev = tail
         
-    fid.close()   
+    fid.close()
     return 0

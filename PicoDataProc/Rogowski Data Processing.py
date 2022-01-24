@@ -20,8 +20,6 @@ import ntpath
 import datetime
 from RogowskiDataProcessingFunctions import *
 
-
-
 #import csv files from folder
 path = os.getcwd();                                     #currently working directory
 csv_files = glob.glob(os.path.join(path, "*.csv"));      #files in directory
@@ -33,7 +31,7 @@ raw = [];
 intRog = [];
 
 # Checksum function
-checksum(csv_files, path) 
+checksum(csv_files, path)
 # End of checksum function
 
 #loop over the list of csv files
