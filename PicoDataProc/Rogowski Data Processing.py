@@ -3,6 +3,10 @@
 In this version, the Rogowski coil data is plotted and the peaks are considered the current. 
 """
 
+"""
+@Tyler Werne - Adding checksum functionality to check for duplicates as well as 
+creating a record for data integrity.
+"""
 import numpy as np
 import pandas as pd
 import os 
@@ -11,6 +15,7 @@ import matplotlib.pyplot as plt
 from matplotlib.axis import Axis
 from scipy.signal import find_peaks
 from scipy.integrate import quad
+import hashlib
 
 #Function for integration
 #def integrate(x):
@@ -95,6 +100,20 @@ time = [];
 raw = [];
 intRog = [];
 
+# Checksum function
+cksum_prev = "0"
+file_prev = "0"
+for file in csv_files:
+    cksum = hashlib.md5(file.encode('utf-8')).hexdigest()
+    if(cksum is cksum_prev):
+        print("File ",file," is a duplicate of ",file_prev,".")
+    else:
+        print("File is not a copy.")
+    cksum_prev = cksum
+    file_prev = file
+    
+# End of checksum function
+
 #loop over the list of csv files
 for file in csv_files:
     #read the csv file
@@ -111,7 +130,7 @@ for file in csv_files:
     center = df['E']
     center = -center
     west = df['H']
-
+    '''
     east_curr = integration(east)
 
     #plot column arrays
@@ -126,10 +145,10 @@ for file in csv_files:
     distribution(east, center, west)
 
     plt.legend(['East Current','Center Current','West Current'])
-
+    
 
 plt.show()
-    
+'''
 
   
 
