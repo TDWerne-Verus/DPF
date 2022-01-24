@@ -16,6 +16,8 @@ from matplotlib.axis import Axis
 from scipy.signal import find_peaks
 from scipy.integrate import quad
 import hashlib
+import ntpath
+import datetime
 
 #Function for integration
 #def integrate(x):
@@ -103,22 +105,28 @@ intRog = [];
 # Checksum function
 cksum_prev = "0"
 file_prev = "0"
+MD5_name = path + "\MD5_of_files_" + pd.to_datetime('today').strftime('%Y%m%d') +".txt"
+fid = open(MD5_name,"w")
 for file in csv_files:
+    head, tail = ntpath.split(file)
     cksum = hashlib.md5(file.encode('utf-8')).hexdigest()
     if(cksum is cksum_prev):
-        print("File ",file," is a duplicate of ",file_prev,".")
+        print("File ",tail," is a duplicate of ",file_prev,".")
     else:
         print("File is not a copy.")
     cksum_prev = cksum
+    fid.writelines([tail,"    ", cksum,"\n"])
     file_prev = file
     
+fid.close()    
 # End of checksum function
 
 #loop over the list of csv files
 for file in csv_files:
     #read the csv file
     data = pd.read_csv(file) 
-    print('File: ', file)
+    head, tail = ntpath.split(file)
+    print('File: ', tail)
 
     #setting variables to current channels
     df = pd.DataFrame(data, columns= ['index','time','A','B','C','E','H'])
