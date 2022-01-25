@@ -10,11 +10,14 @@ import glob
 import matplotlib.pyplot as plt
 from matplotlib.axis import Axis
 from scipy.signal import find_peaks
-from scipy.integrate import quad
+from scipy import signal
+from scipy import integrate
+import scipy.integrate as integrate
+import scipy.special as special
+from scipy.integrate import simps
+from numpy import trapz
+import datetime
 
-#Function for integration
-#def integrate(x):
-   # return [np.sin(x), np.exp(x)]
 
 #function to output current distribution and total
 def distribution(a, b, c):
@@ -25,25 +28,23 @@ def distribution(a, b, c):
 
     return NONE
     '''
-    #peaks of voltages on scope data
+    #peaks of integration for current
     a_peak = max_array(a)
     b_peak = max_array(b)
     c_peak = max_array(c)
     #d_peak = max_array(d)
 
-    #convert voltages to currents using sensativity 
-    a_current = a_peak/(sensitivity*1000)
-    b_current = b_peak/(sensitivity*1000)
-    c_current = c_peak/(sensitivity*1000)
-    #d_current = (d_peak *1000)/sensativity
+    #convert from uA/s to A/s
+    a_current = a_peak/(1000000)
+    b_current = b_peak/(1000000)
+    c_current = c_peak/(1000000)
 
     total_curr = addition(a_current,b_current,c_current)
-    total_volt = addition(a_peak, b_peak, c_peak)
 
-    print('CHANNEL A - East side:', a_peak, 'mV = ',a_current, 'A/ns')
-    print('CHANNEL E - Center:', b_peak, 'mV = ', b_current, 'A/ns')
-    print('CHANNEL H - West Side:', c_peak, 'mV = ', c_current, 'A/ns')
-    print('TOTAL MODULE SCOPE VOLTAGE:', total_volt, 'mV = ', total_curr, 'A/ns')
+    print('CHANNEL A - East side:', a_current, 'A/s')
+    print('CHANNEL E - Center:', b_current, 'A/s')
+    print('CHANNEL H - West Side:', c_current, 'A/s')
+    print('TOTAL MODULE SCOPE VOLTAGE:', total_curr, 'A/s')
 
 #function to find max current of each signal in module
 def max_array(x):
@@ -56,7 +57,7 @@ def max_array(x):
     '''
     
     peaks, _ = find_peaks(x, height = max(x))
-    plt.plot(time[peaks], x[peaks],"x",color="gray")
+    #plt.plot(time[peaks], x[peaks],"x",color="gray")
     
     return x[peaks[0]]
 
@@ -74,14 +75,28 @@ def addition(a,b,c):
 
     return addition
 
+#function to filter out raw data
+def filter(data):
+    fs = 2.5e9  #Sampling frequency
+    fc = 1e7   #cutoff frequency
+    w = fc/(fs/2)   #Normalize frequency
+    b,a = signal.butter(5,w,'low')
+    filtered = signal.filtfilt(b,a,data)
+
+    return filtered
+
 #function to integrate the raw voltage data collected from the Rogowski coil
-def integration(data):
+def integration(data,time,sens):
     '''
     
     '''
-    for x in range(0,len(data)):
-        print(x)
-        int_curr = (quad(data[x], x-1, x+1))
+    data = 1e6*(data/sens)
+    first = trapz((data[0],data[1]),dx=1/(2.5e9))
+    int_curr = [first]
+   
+    for x in range(1,len(data+1)):
+      Vout = trapz((data[x-1],data[x]),dx=1/(2.5e9)) 
+      int_curr.append((Vout)) 
 
     return int_curr
 
@@ -99,33 +114,41 @@ intRog = [];
 for file in csv_files:
     #read the csv file
     data = pd.read_csv(file) 
-    print('File: ', file)
 
     #setting variables to current channels
     df = pd.DataFrame(data, columns= ['index','time','A','B','C','E','H'])
 
     time = df['time']
     east = df['A']
-    int_A = df['B']
+    int_A = df['B'] #40dB attenuation
     dead = df['C']
     center = df['E']
     center = -center
     west = df['H']
 
-    east_curr = integration(east)
+    east_filt = filter(east)
+    east_curr = integration(east_filt,time,sensitivity)
 
     #plot column arrays
-    plt.figure()
+    fig, ax1 = plt.subplots()
     plt.grid(True)
     plt.xlim(0,2e-5)
-    plt.plot(time, east, time, center, time, west, time, east_curr)
-    plt.xlabel('Time(s)')
-    plt.ylabel('Voltage(mV)')
+    ax1.set_xlabel('Time(s)')
+    ax1.set_ylabel('Current(mV)')
+    plt.plot(time, int_A, time, east, time, east_filt)
+    plt.legend(['Current Integrated Signal'])
+
+    ax2 = ax1.twinx()    #instantiate a second azes that shares the same x-axis
+    ax2.set_ylabel('Current(A)')
+    plt.plot(time, east_curr)
+    plt.legend(['Current Integration Calculation'])
+    #plt.plot(time, east, time, east_filt)
+    #plt.xlabel('Time(s)')
+    #plt.ylabel('Voltage(mV)')
 
     #Finds distirubution of current data
-    distribution(east, center, west)
+    #distribution(east_curr, center, west)
 
-    plt.legend(['East Current','Center Current','West Current'])
 
 
 plt.show()
