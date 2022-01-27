@@ -95,18 +95,16 @@ def filter(data):
 
     return filtered
 
-#function to integrate the raw voltage data collected from the Rogowski coil
-def integration(data,time,sens):
-    '''
-    
-    '''
-    data = 1e6*(data/sens)
-    first = trapz((data[0],data[1]),dx=1/(2.5e9))
-    int_curr = [first]
-   
-    for x in range(1,len(data+1)):
-      Vout = trapz((data[x-1],data[x]),dx=1/(2.5e9)) 
-      int_curr.append((Vout)) 
+#function to integrate the raw voltage data collected from the Rogowski coil using cumunalative sums
+def integration(data, time, sense):
+    dscale = 1e6 #I is scaled to MA, set to A
+    tscale = 1e5
+
+    tmp_x_arr = time
+    tmp_y_arr = [y*dscale for y in data]
+
+    integrated_Idot_x_arr = [x*tscale for x in tmp_x_arr]
+    int_curr = integrate.cumtrapz(tmp_y_arr, integrated_Idot_x_arr, initial = 0)
 
     return int_curr
 
@@ -144,21 +142,21 @@ for file in csv_files:
     '''
     east_curr = integration(east)
 
-    east_filt = filter(east)
+    east_filt = filter(east)    #filter raw data
     east_curr = integration(east_filt,time,sensitivity)
     #plot column arrays
-    fig, ax1 = plt.subplots()
+    #fig, ax1 = plt.subplots()
     plt.grid(True)
     plt.xlim(0,2e-5)
-    ax1.set_xlabel('Time(s)')
-    ax1.set_ylabel('Current(mV)')
-    plt.plot(time, int_A, time, east, time, east_filt)
-    plt.legend(['Current Integrated Signal'])
+    #ax1.set_xlabel('Time(s)')
+    #ax1.set_ylabel('Current(mV)')
+    plt.plot(time, east_filt, time, int_A, time, east_curr)
+    #plt.legend(['Current Integrated Signal'])
 
-    ax2 = ax1.twinx()    #instantiate a second azes that shares the same x-axis
-    ax2.set_ylabel('Current(A)')
-    plt.plot(time, east_curr)
-    plt.legend(['Current Integration Calculation'])
+    #ax2 = ax1.twinx()    #instantiate a second azes that shares the same x-axis
+    #ax2.set_ylabel('Current(A)')
+    #plt.plot(time, east_int)
+    #plt.legend(['Current Integration Calculation'])
     #plt.plot(time, east, time, east_filt)
     #plt.xlabel('Time(s)')
     #plt.ylabel('Voltage(mV)')
