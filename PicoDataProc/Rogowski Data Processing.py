@@ -44,16 +44,11 @@ def distribution(a, b, c):
     c_peak = max_array(c)
     #d_peak = max_array(d)
 
-    #convert from uA/s to A/s
-    a_current = a_peak/(1000000)
-    b_current = b_peak/(1000000)
-    c_current = c_peak/(1000000)
+    total_curr = addition(a_peak,b_peak,c_peak)
 
-    total_curr = addition(a_current,b_current,c_current)
-
-    print('CHANNEL A - East side:', a_current, 'A/s')
-    print('CHANNEL E - Center:', b_current, 'A/s')
-    print('CHANNEL H - West Side:', c_current, 'A/s')
+    print('CHANNEL A - East side:', a_peak, 'A/s')
+    print('CHANNEL E - Center:', b_peak, 'A/s')
+    print('CHANNEL H - West Side:', c_peak, 'A/s')
     print('TOTAL MODULE SCOPE VOLTAGE:', total_curr, 'A/s')
 
 #function to find max current of each signal in module
@@ -67,7 +62,7 @@ def max_array(x):
     '''
     
     peaks, _ = find_peaks(x, height = max(x))
-    #plt.plot(time[peaks], x[peaks],"x",color="gray")
+    plt.plot(time[peaks], x[peaks],"*",color="red")
     
     return x[peaks[0]]
 
@@ -97,15 +92,16 @@ def filter(data):
 
 #function to integrate the raw voltage data collected from the Rogowski coil using cumunalative sums
 def integration(data, time, sense):
-    dscale = 1e6 #I is scaled to MA, set to A
-    tscale = 1e5
+    dscale = 1e-3 #mV to V input data
+    tscale = 1 #1e-5 #10 microseconds to seconds
 
-    tmp_x_arr = time
+    #scale everything
+    tmp_x_arr = [x*tscale for x in time]
     tmp_y_arr = [y*dscale for y in data]
 
-    integrated_Idot_x_arr = [x*tscale for x in tmp_x_arr]
-    int_curr = integrate.cumtrapz(tmp_y_arr, integrated_Idot_x_arr, initial = 0)
+    volt_int = integrate.cumtrapz(tmp_y_arr, tmp_x_arr, initial = 0) #V
 
+    int_curr = volt_int/sense   #A/s
     return int_curr
 
 #import csv files from folder
@@ -113,7 +109,7 @@ path = os.getcwd();                                     #currently working direc
 csv_files = glob.glob(os.path.join(path, "*.csv"));      #files in directory
 
 #variables
-sensitivity = 0.217; #V/(A/ns)
+sensitivity = 0.217*1e-9; #V/(A/s)
 time = [];
 raw = [];
 intRog = [];
@@ -130,10 +126,10 @@ for file in csv_files:
     print('File: ', tail)
 
     #setting variables to current channels
-    df = pd.DataFrame(data, columns= ['index','time','A','B','C','E','H'])
+    df = pd.DataFrame(data, columns= ['index','time','A','B','C','D','E','F','G','H'])
 
     time = df['time']
-    east = df['A']
+    N3E = df['A']
     int_A = df['B'] #40dB attenuation
     dead = df['C']
     center = df['E']
@@ -144,19 +140,40 @@ for file in csv_files:
 
     east_filt = filter(east)    #filter raw data
     east_curr = integration(east_filt,time,sensitivity)
+    S2C = df['D']
+    N3C = df['E']
+    N2C = df['F']
+    N1C = df['G']
+    N3W = df['H']
+
+    #filtering of raw data
+    N3E_filt = filter(N3E)
+    S2C_filt = filter(S2C)
+    N3C_filt = filter(N3C)
+    N2C_filt = filter(N2C)
+    N1C_filt = filter(N1C)
+    N3W_filt = filter(N3W)
+
+
+    #east_curr = integration(east_filt,time,sensitivity)
+   #distribution(east_curr, east_curr, east_curr)
+
+    (Adding new channels for full analysis)
     #plot column arrays
     #fig, ax1 = plt.subplots()
     plt.grid(True)
     plt.xlim(0,2e-5)
     #ax1.set_xlabel('Time(s)')
     #ax1.set_ylabel('Current(mV)')
-    plt.plot(time, east_filt, time, int_A, time, east_curr)
-    #plt.legend(['Current Integrated Signal'])
+    #plt.plot(time, int_A)
+    #plt.legend(['Passive Integrator'])
 
     #ax2 = ax1.twinx()    #instantiate a second azes that shares the same x-axis
     #ax2.set_ylabel('Current(A)')
-    #plt.plot(time, east_int)
-    #plt.legend(['Current Integration Calculation'])
+    plt.plot(time,N3E,time,S2C,time,N3C, time, N2C, time, N1C, time,N3W)
+    plt.xlabel('Time(s)')
+    plt.ylabel('Current(A)')
+    plt.legend(['A','B','D','E','F','G','H'])
     #plt.plot(time, east, time, east_filt)
     #plt.xlabel('Time(s)')
     #plt.ylabel('Voltage(mV)')
