@@ -30,7 +30,7 @@ import datetime
 
 
 #function to output current distribution and total
-def distribution(a, b, c):
+def curr_peaks(a, b, c, d, e, f):
     '''
     Outputs high power current values detected by Rogowski coils
     
@@ -42,14 +42,22 @@ def distribution(a, b, c):
     a_peak = max_array(a)
     b_peak = max_array(b)
     c_peak = max_array(c)
-    #d_peak = max_array(d)
+    d_peak = max_array(d)
+    e_peak = max_array(e)
+    f_peak = max_array(f)
 
-    total_curr = addition(a_peak,b_peak,c_peak)
+    total_curr = addition(a_peak,c_peak,f_peak)
+    peak_array = [a_peak,b_peak,c_peak,d_peak,e_peak,f_peak]
 
-    print('CHANNEL A - East side:', a_peak, 'A/s')
-    print('CHANNEL E - Center:', b_peak, 'A/s')
-    print('CHANNEL H - West Side:', c_peak, 'A/s')
-    print('TOTAL MODULE SCOPE VOLTAGE:', total_curr, 'A/s')
+    print('N3 East:', a_peak, 'A/s')
+    print('S2 Center:', b_peak, 'A/s')
+    print('N3 Center:', c_peak, 'A/s')
+    print('N2 Center:', d_peak, 'A/s')
+    print('N1 Center:', e_peak, 'A/s')
+    print('N3 West:', f_peak, 'A/s')
+
+    print('TOTAL N3 MODULE CURRENT:', total_curr, 'A/s')
+    return peak_array
 
 #function to find max current of each signal in module
 def max_array(x):
@@ -60,13 +68,19 @@ def max_array(x):
 
     returns the time and maximum peak value of the array
     '''
-    
-    peaks, _ = find_peaks(x, height = max(x))
-    plt.plot(time[peaks], x[peaks],"*",color="red")
-    
-    return x[peaks[0]]
+    if len(x) <= 1:
+        print('NOTHING')
+        pfound = 0
 
-#function to combine the total of all of the currents in a module
+    if self.x      
+        peaks, _ = find_peaks(x, height = max(x))
+        print(x[peaks])
+        plt.plot(time[peaks], x[peaks],"*",color="red")
+        pfound = x[peaks[0]]
+        
+    return pfound
+
+#function to combine a Modules total for 3 Rogowski coils
 def addition(a,b,c):
     '''
     Finds the total peak current of the module of 4 high current wires  
@@ -142,6 +156,7 @@ for file in csv_files:
     east_curr = integration(east_filt,time,sensitivity)
     S2C = df['D']
     N3C = df['E']
+    N3C = -N3C
     N2C = df['F']
     N1C = df['G']
     N3W = df['H']
@@ -154,15 +169,39 @@ for file in csv_files:
     N1C_filt = filter(N1C)
     N3W_filt = filter(N3W)
 
+    #Integrate to get current
+    N3E_int = integration(N3E_filt, time, sensitivity)
+    S2C_int = integration(S2C_filt, time, sensitivity)
+    N3C_int = integration(N3C_filt, time, sensitivity)
+    N2C_int = integration(N2C_filt, time, sensitivity)
+    N1C_int = integration(N1C_filt, time, sensitivity)
+    N3W_int = integration(N3W_filt, time, sensitivity)
 
-    #east_curr = integration(east_filt,time,sensitivity)
-   #distribution(east_curr, east_curr, east_curr)
+    #Print out the max of each current plot and total
+    peaks = curr_peaks(N3E_int, S2C_int, N3C_int, N2C_int, N1C_int, N3W_int)
 
     (Adding new channels for full analysis)
     #plot column arrays
     #fig, ax1 = plt.subplots()
     plt.grid(True)
     plt.xlim(0,2e-5)
+    plt.plot(time,N3E_filt,time,S2C_filt,time,N3C_filt, time, N2C_filt, time, N1C_filt, time,N3W_filt)
+    plt.xlabel('Time(s)')
+    plt.ylabel('Rogowski Voltage Input (mV)')
+    plt.legend(['A','B','D','E','F','G','H'])
+
+    plt.figure
+    plt.grid(True)
+    plt.xlim(0,2e-5)
+    plt.plot(time,N3E_int,time,S2C_int,time,N3C_int, time, N2C_int, time, N1C_int, time,N3W_int)
+    plt.xlabel('Time(s)')
+    plt.ylabel('Current (A)')
+    plt.legend(['A','B','D','E','F','G','H'])
+
+    plt.figure
+    plt.plot(peaks)
+    plt.xlabel('Peaks of Channels')
+    plt.ylabel('Current (A)')
     #ax1.set_xlabel('Time(s)')
     #ax1.set_ylabel('Current(mV)')
     #plt.plot(time, int_A)
@@ -170,10 +209,7 @@ for file in csv_files:
 
     #ax2 = ax1.twinx()    #instantiate a second azes that shares the same x-axis
     #ax2.set_ylabel('Current(A)')
-    plt.plot(time,N3E,time,S2C,time,N3C, time, N2C, time, N1C, time,N3W)
-    plt.xlabel('Time(s)')
-    plt.ylabel('Current(A)')
-    plt.legend(['A','B','D','E','F','G','H'])
+    
     #plt.plot(time, east, time, east_filt)
     #plt.xlabel('Time(s)')
     #plt.ylabel('Voltage(mV)')
