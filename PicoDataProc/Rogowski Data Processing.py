@@ -47,7 +47,11 @@ def curr_peaks(a, b, c, d, e, f):
     f_peak = max_array(f)
 
     total_curr = addition(a_peak,c_peak,f_peak)
+    
+    #df = pd.read_excel()
     peak_array = [a_peak,b_peak,c_peak,d_peak,e_peak,f_peak]
+    print(peak_array)
+    #peak_array.to_excel('Numerically_Integrated_Rogowski_Currents.xlsx')
 
     print('N3 East:', a_peak, 'A/s')
     print('S2 Center:', b_peak, 'A/s')
@@ -68,12 +72,9 @@ def max_array(x):
 
     returns the time and maximum peak value of the array
     '''
-    print('ITS IN HERE')
     peaks, _ = find_peaks(x, height = max(x))
-    print(peaks[0])
-    print(x[peaks[0]])
-    plt.plot(time[peaks], x[peaks],"*",color="red")
-    pfound = x[peaks[0]]
+    plt.plot(time[peaks], x[peaks],"*")
+    pfound = x[peaks]
     
     return pfound
 
@@ -177,28 +178,33 @@ for file in csv_files:
     #Print out the max of each current plot and total
     peaks = curr_peaks(N3E_int, S2C_int, N3C_int, N2C_int, N1C_int, N3W_int)
 
+    
     (Adding new channels for full analysis)
     #plot column arrays
+    
+    #Plot filtered raw data
+    (Integration)
     #fig, ax1 = plt.subplots()
+    #plt.grid(True)
+    #plt.xlim(0,2e-5)
+    #plt.plot(time,N3E_filt,time,S2C_filt,time,N3C_filt, time, N2C_filt, time, N1C_filt, time,N3W_filt)
+    #plt.xlabel('Time(s)')
+    #plt.ylabel('Current (A))')
+    #plt.legend(['N3E','S2C','N3C','N2C','N1C','N3W'])
+
+    #Plot integrated Rogowski coil as current
+    #plt.figure
     plt.grid(True)
     plt.xlim(0,2e-5)
-    plt.plot(time,N3E_filt,time,S2C_filt,time,N3C_filt, time, N2C_filt, time, N1C_filt, time,N3W_filt)
-    plt.xlabel('Time(s)')
-    plt.ylabel('Rogowski Voltage Input (mV)')
-    plt.legend(['A','B','D','E','F','G','H'])
-
-    plt.figure
-    plt.grid(True)
-    plt.xlim(0,2e-5)
-    plt.plot(time,N3E_int,time,S2C_int,time,N3C_int, time, N2C_int, time, N1C_int, time,N3W_int)
+    plt.plot(time,N3E_int,time,S2C_int,time,N3C_int, time, N2C_int, time, N1C_int, time, N3W_int)
     plt.xlabel('Time(s)')
     plt.ylabel('Current (A)')
-    plt.legend(['A','B','D','E','F','G','H'])
+    plt.legend(['N3E','S2C','N3C','N2C','N1C','N3W'])
 
-    plt.figure
-    plt.plot(peaks)
-    plt.xlabel('Peaks of Channels')
-    plt.ylabel('Current (A)')
+    #plt.figure
+    #plt.plot([1,2,3,4,5,6],peaks)
+    #plt.xlabel('Peaks of Channels')
+    #plt.ylabel('Current (A)')
     #ax1.set_xlabel('Time(s)')
     #ax1.set_ylabel('Current(mV)')
     #plt.plot(time, int_A)
