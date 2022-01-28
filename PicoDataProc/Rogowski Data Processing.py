@@ -5,10 +5,12 @@ In this version, the Rogowski coil data is plotted and the peaks are considered 
 
 import numpy as np
 import pandas as pd
+from pandas import DataFrame
 import os 
 import glob
 import matplotlib.pyplot as plt
 from matplotlib.axis import Axis
+from matplotlib.figure import Figure
 from scipy.signal import find_peaks
 from scipy import signal
 from scipy import integrate
@@ -40,7 +42,6 @@ def curr_peaks(a, b, c, d, e, f):
     
     #df = pd.read_excel()
     peak_array = [a_peak,b_peak,c_peak,d_peak,e_peak,f_peak]
-    print(peak_array)
     #peak_array.to_excel('Numerically_Integrated_Rogowski_Currents.xlsx')
 
     print('N3 East:', a_peak, 'A/s')
@@ -164,14 +165,13 @@ for file in csv_files:
     #plt.legend(['N3E','S2C','N3C','N2C','N1C','N3W'])
 
     #Plot integrated Rogowski coil as current
-    #plt.figure
     plt.grid(True)
     plt.xlim(0,2e-5)
     plt.plot(time,N3E_int,time,S2C_int,time,N3C_int, time, N2C_int, time, N1C_int, time, N3W_int)
     plt.xlabel('Time(s)')
     plt.ylabel('Current (A)')
     plt.legend(['N3E','S2C','N3C','N2C','N1C','N3W'])
-
+    plt.figure()
     #plt.figure
     #plt.plot([1,2,3,4,5,6],peaks)
     #plt.xlabel('Peaks of Channels')
@@ -190,6 +190,12 @@ for file in csv_files:
 
     #Finds distirubution of current data
     #distribution(east_curr, center, west)
+    
+    
+    #Write data to Excel
+    df = DataFrame({'N3 East': peaks[0]})
+    print(df)
+    df.to_excel('test.xlsx',sheet_name = 'sheet1', index = False)
 
 
 
