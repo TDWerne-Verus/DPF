@@ -68,16 +68,13 @@ def max_array(x):
 
     returns the time and maximum peak value of the array
     '''
-    if len(x) <= 1:
-        print('NOTHING')
-        pfound = 0
-
-    if self.x      
-        peaks, _ = find_peaks(x, height = max(x))
-        print(x[peaks])
-        plt.plot(time[peaks], x[peaks],"*",color="red")
-        pfound = x[peaks[0]]
-        
+    print('ITS IN HERE')
+    peaks, _ = find_peaks(x, height = max(x))
+    print(peaks[0])
+    print(x[peaks[0]])
+    plt.plot(time[peaks], x[peaks],"*",color="red")
+    pfound = x[peaks[0]]
+    
     return pfound
 
 #function to combine a Modules total for 3 Rogowski coils
@@ -156,7 +153,7 @@ for file in csv_files:
     east_curr = integration(east_filt,time,sensitivity)
     S2C = df['D']
     N3C = df['E']
-    N3C = -N3C
+    N3C = -N3C      #Inverted Rogowski Coil
     N2C = df['F']
     N1C = df['G']
     N3W = df['H']
