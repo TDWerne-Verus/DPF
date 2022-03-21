@@ -24,7 +24,7 @@ import datetime
 
 
 #function to output current distribution and total
-def curr_peaks(a, b, c, d, e, f, time):
+def curr_peaks(a, b, c, d, e, f):
     '''
     Outputs high power current values detected by Rogowski coils
     
@@ -33,31 +33,33 @@ def curr_peaks(a, b, c, d, e, f, time):
     return NONE
     '''
     #peaks of integration for current
-    a_peak = max_array(a, time)
-    b_peak = max_array(b, time)
-    c_peak = max_array(c, time)
-    d_peak = max_array(d, time)
-    e_peak = max_array(e, time)
-    f_peak = max_array(f, time)
+    a_peak = max_array(a)
+    b_peak = max_array(b)
+    c_peak = max_array(c)
+    d_peak = max_array(d)
+    e_peak = max_array(e)
+    f_peak = max_array(f)
 
     total_curr = addition(a_peak,c_peak,f_peak)
+    
     
     #df = pd.read_excel()
     peak_array = [a_peak,b_peak,c_peak,d_peak,e_peak,f_peak]
     #peak_array.to_excel('Numerically_Integrated_Rogowski_Currents.xlsx')
 
     print('N3 East:', a_peak, 'A/s')
-    print('S2 Center:', b_peak, 'A/s')
-    print('N3 Center:', c_peak, 'A/s')
+    print('N3 West:', b_peak, 'A/s')
+    print('N1 Center:', c_peak, 'A/s')
     print('N2 Center:', d_peak, 'A/s')
-    print('N1 Center:', e_peak, 'A/s')
-    print('N3 West:', f_peak, 'A/s')
+    print('N3 Center:', e_peak, 'A/s')
+    print('S2 Center:', f_peak, 'A/s')
 
     print('TOTAL N3 MODULE CURRENT:', total_curr, 'A/s')
+    
     return peak_array
 
 #function to find max current of each signal in module
-def max_array(x, time):
+def max_array(x):
     '''
     Finds the peak of the rogowski current data
     
@@ -66,7 +68,7 @@ def max_array(x, time):
     returns the time and maximum peak value of the array
     '''
     peaks, _ = find_peaks(x, height = max(x))
-    plt.plot(time[peaks], x[peaks],"*")
+    #plt.plot(time[peaks], x[peaks],"*")
     pfound = x[peaks]
     
     return pfound
@@ -85,6 +87,13 @@ def addition(a,b,c):
 
     return addition
 
+#function to add 40dB attenuation
+def att(data):
+    attenuation = 100 #40dB
+    tmp_x_arr = [x*attenuation for x in data]
+    
+    return tmp_x_arr
+    
 #function to filter out raw data
 def filter(data):
     fs = 2.5e9  #Sampling frequency
