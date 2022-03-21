@@ -77,14 +77,14 @@ pear = [];      #pearson voltage
 pear_curr = []; #pearson current
 rogo = [];      #raw rogowski voltage
 rogo_vol = []   #integrated raw rogowski voltage
-rogo_curr = []; #rogowski current
 pass_rogo = []; #passivly integrated rogowski current
-pass_curr = []; #current of passive rogowski
 sensitivities = [];
 
 for file in csv_files:
     
+    pass_curr = []; #current of passive rogowski
     
+    rogo_curr = []; #rogowski current
     Ch1 = 'Ch1'
     Ch2 = 'Ch2'
     #read the csv file
@@ -123,24 +123,45 @@ for file in csv_files:
         #--------Rogowski Voltage Processing----------
         rogo = df['CH2'];                                    #K*dI/dt
         int_rogo = integration(rogo, 1, time, 1)         #K*I
-        int_rogo = MAF(int_rogo, order)
+        #int_rogo = MAF(int_rogo, order)
         for x in range(len(int_rogo)):
             rogo_curr.append(int_rogo[x]/4)                  #divided by 4 loops
+            # slow we can make faster by not dynamically allocating
         int_peak = find_peak(rogo_curr)
         #matches = (x for x in rogo_curr if x > 0.95*max(rogo_curr))
                       #peak of integrated current
         #x_peaks = [x_peaks for x_peaks,x in enumerate(rogo_curr) if x > 0.95*max(rogo_curr)]
-        for x in range(len(int_rogo)):
+        n = 0
+        '''
+        for x in rogo_curr:
             if (x > 0.95*max(rogo_curr)):
-                start = x
-                break;
+                start = n
+                break
+            n += 1
         rogo_curr.reverse()
-        for x in range(len(int_rogo)):
+        n = 0
+        for x in rogo_curr:
             if (x > 0.95*max(rogo_curr)):
-                end_rev = x
-                break;
+                end_rev = n
+                break
+            n += 1 
         rogo_curr.reverse()
         end = len(rogo_curr) - end_rev
+        '''
+        th = rogo_curr > (0.70*max(rogo_curr))
+        th[1:][th[:-1] & th[1:]] = False
+        occurrences_of_true = np.where(th == True)
+        start = occurrences_of_true[0][0]
+        #start = start[0]
+        th = rogo_curr > (0.7*max(rogo_curr))
+        th = np.flip(th)
+        th[1:][th[:-1] & th[1:]] = False
+        occurrences_of_true = np.where(th == True)
+        end_rev = occurrences_of_true[0][0]
+        end = len(rogo_curr) - end_rev
+        
+        
+        #end = end[0]
         '''
         #x_peaks = [enumerate(rogo_curr)]
         y_peaks = rogo_curr[x_peaks[0]:x_peaks[-1]]
@@ -158,9 +179,27 @@ for file in csv_files:
         sensitivity = (int_peak/pear_peak)/(0.1)       #V/A
         print('Calculated SP Sensitivity = %0.12f V*s/A' % sensitivity)
         sensitivities = int_peaks
-        for x in range(0,len(int_peaks)):
-            sensitivities[x] = (int_peaks[x]/pear_peaks[x])/(0.1)              #V*s/A 
+        n = 0; m = 0
+        n_peaks = x_peaks
+        dels = []
+        for x in range(0,len(int_peaks),1):
+            if (pear_peaks[x] != 0):
+                sensitivities[n] = (int_peaks[x]/pear_peaks[x])/(0.1)   #V*s/A 
+                n += 1
+                m += 1
+            else:
+                #do nothing
+                del n_peaks[m]
+                print('Found Divide by zero at ', x)
+        del sensitivities[n:-1]
         sensitivity = np.mean(sensitivities)
+        
+        plt.figure('Sensativity Over All Data')
+        plt.grid(True)
+        plt.xlim(x_peaks[0], x_peaks[-1])
+        plt.bar(n_peaks, sensitivities)
+        plt.xlabel('Time [s]')
+        plt.ylabel('Sensitivity')
         
         print('Calculated Sensitivity = %0.12f V*s/A' % sensitivity)
         sense_array.append(sensitivity)
