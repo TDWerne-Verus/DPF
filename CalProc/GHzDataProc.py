@@ -129,13 +129,25 @@ for file in csv_files:
         int_peak = find_peak(rogo_curr)
         #matches = (x for x in rogo_curr if x > 0.95*max(rogo_curr))
                       #peak of integrated current
-        x_peaks = [x_peaks for x_peaks,x in enumerate(rogo_curr) if x > 0.95*max(rogo_curr)]
-        x_peaks= x_peaks
-                
+        #x_peaks = [x_peaks for x_peaks,x in enumerate(rogo_curr) if x > 0.95*max(rogo_curr)]
+        for x in range(len(int_rogo)):
+            if (x > 0.95*max(rogo_curr)):
+                start = x
+                break;
+        rogo_curr.reverse()
+        for x in range(len(int_rogo)):
+            if (x > 0.95*max(rogo_curr)):
+                end_rev = x
+                break;
+        rogo_curr.reverse()
+        end = len(rogo_curr) - end_rev
+        '''
         #x_peaks = [enumerate(rogo_curr)]
         y_peaks = rogo_curr[x_peaks[0]:x_peaks[-1]]
         start = x_peaks[0]
         end = x_peaks[-1]
+        '''
+        x_peaks = [x for x in range(start,end)]
         int_peaks = rogo_curr[start:end]
         pear_peaks = pear_curr[start:end]
         print('Integrated Rogwoski sensitivity current = %0.10f V*s' % 
