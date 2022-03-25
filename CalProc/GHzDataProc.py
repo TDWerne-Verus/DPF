@@ -43,6 +43,9 @@ sense_array = [];
 pear_array = [];
 int_array = [];
 pass_array = [];
+x_peaks_array = []
+senses_array = []
+rogo_array = []
 
 count = 0
 pear_sense = 0.1           #pearson sensativity is 0.1 V/A
@@ -76,7 +79,7 @@ time = [];
 pear = [];      #pearson voltage
 pear_curr = []; #pearson current
 rogo = [];      #raw rogowski voltage
-rogo_vol = []   #integrated raw rogowski voltage
+rogo_vol = [];   #integrated raw rogowski voltage
 pass_rogo = []; #passivly integrated rogowski current
 sensitivities = [];
 
@@ -148,6 +151,8 @@ for file in csv_files:
         rogo_curr.reverse()
         end = len(rogo_curr) - end_rev
         '''
+        
+        
         th = rogo_curr > (0.70*max(rogo_curr))
         th[1:][th[:-1] & th[1:]] = False
         occurrences_of_true = np.where(th == True)
@@ -203,6 +208,9 @@ for file in csv_files:
         
         print('Calculated Sensitivity = %0.12f V*s/A' % sensitivity)
         sense_array.append(sensitivity)
+        x_peaks_array.append(x_peaks)
+        senses_array.append(sensitivities)
+        rogo_array.append(rogo[start:end]/4)
     '''
     Eventually, we want to not rely on having both channels in the same file 
     folder
@@ -226,6 +234,10 @@ for file in csv_files:
     plt.ylabel('Current (A))')
     plt.legend(['Pearson = %0.2f' % pear_peak, 'Mathematical Rogowski = %0.2f' % int_peak, 'Passive Rogowski = %0.2f' % pass_peak])
    '''
+#----------------Best Fit Function------------------------------
+
+    
+   
     
 #----------------Difference Calculations-------------------
 pear_diff = (max(pear_array) - min(pear_array))*100/(sum(pear_array)/
