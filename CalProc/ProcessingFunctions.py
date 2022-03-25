@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 16 21:29:53 2022
-
-@author: tyler.werne
-"""
-
-# -*- coding: utf-8 -*-
-"""
 Created on Mon Jan 31 12:11:03 2022
 
 @author: Tiffany Berntsen and Tyler Werne
@@ -49,15 +42,36 @@ def checksum(csv_files, path):
     fid.close()
     return 0
 
-def integration(data, dscale, time, tscale):
+def CFAR(s, Pfa, refLength, guardLength):
+    '''
+    Implements a CFAR algorithm on s and gives back the thresholding level for 
+    all points in s.
+    
+    s must be a [X,0] dimensional array
+    '''
+    cfarWin= np.ones([(refLength+guardLength)*2+1,1]);
+    cfarWin[refLength+1:refLength+1+2*guardLength]=0;
+    cfarWin = cfarWin[:,0]
+    alpha = refLength*2*(Pfa**(-1/(refLength*2)) - 1);
+    cfarWin=alpha*cfarWin/sum(cfarWin);
+    noiseLevel= np.convolve(np.abs(s),cfarWin,'same');
+    cfarThreshold = noiseLevel;
+    
+    plt.figure()
+    plt.plot(s);
+    plt.plot(cfarThreshold,'r--',linewidth= 2)
+    plt.legend(['Signal','CFAR Threshold'])
+    return cfarThreshold
+
+def integration(data, sense, time, tscale):
     '''
 
     Parameters
     ----------
     data : array of floats
         array of to be integrated
-    dscale : integer
-        scaling factor of data to convert to voltage
+    sense : integer
+        sensitivity of the current
     time : array of floats
         array of time data
     tscale : integer
@@ -72,7 +86,7 @@ def integration(data, dscale, time, tscale):
 
     #scale everything
     tmp_x_arr = [x*tscale for x in time]
-    tmp_y_arr = [y*dscale for y in data]
+    tmp_y_arr = [y/sense for y in data]
 
     int_arr = integrate.cumulative_trapezoid(tmp_y_arr, tmp_x_arr, initial = 0)
 
@@ -97,13 +111,15 @@ def att(data, att_fact):
 
     '''
     
-    attenuation = 10**(att_fact/20)
+    attenuation = 10.0**(att_fact/20.0)
     tmp_x_arr = [x*attenuation for x in data]
     
     return tmp_x_arr
 
 def find_peak(data_array):
     '''
+    DO NOT USE
+    
     Parameters
     ----------
     data_array : array of floats
@@ -116,41 +132,19 @@ def find_peak(data_array):
 
     '''
     peaks, _ = find_peaks(data_array, height = max(data_array))
-   
-    pfound = max(data_array)
+    
+    pfound = data_array[peaks]
     
     return pfound
 
 
-def MAF(data_array ,order):
-    '''
-    Moving-Average Filter: Low pass filter
-    
-    Parameters
-    ----------
-    data_array : array of floats
-        data array where the first peak of the array needs to be found
-        
-    order : int
-        integer specifying order of the Moving-Average Filter
 
-    Returns
-    -------
-    data_MAF : array of floats
-        data with MAF applied
-
-    '''
-    data_MAF = data_array
-    for x in range(order,len(data_array)):
-        data_MAF[x] = np.sum(data_array[x+1-order:x+1])/order
-        
-    return data_MAF
 
 
 
 
 #function to output current distribution and total
-def curr_peaks(a, b, c, d, e):
+def curr_peaks(a, b, c, d, e, f, g, h):
     '''
     Outputs high power current values detected by Rogowski coils. Check order and number of coils for total current. 
     
@@ -164,27 +158,72 @@ def curr_peaks(a, b, c, d, e):
     c_peak = max_array(c)
     d_peak = max_array(d)
     e_peak = max_array(e)
-    #f_peak = max_array(f)
+    f_peak = max_array(f)
+    g_peak = max_array(g)
+    h_peak = max_array(h)
+
+    peak_array = a_peak,b_peak,c_peak,d_peak,e_peak,f_peak,g_peak,h_peak#array to store module peaks
+    
+    print('3 West:', a_peak, 'A/s')
+    print('3 Center:', b_peak, 'A/s')
+    print('3 East:', c_peak, 'A/s')
+    print('2 West:', d_peak, 'A/s')
+    print('2 Center:', e_peak, 'A/s')
+    print('2 East:', f_peak, 'A/s')
+    print('1 West:', g_peak, 'A/s')
+    print('1 Center:', h_peak, 'A/s')
+
+    #print('TOTAL N3 MODULE CURRENT:', total_curr, 'A/s')
+    
+    return peak_array
+
+#function to find max current of each signal in module
+def max_array(x):
+    '''
+    Finds the peak of the rogowski current data
+    
+    Parameters: x - input current array
+
+    returns the time and maximum peak value of the array
+    '''
+    peaks, _ = find_peaks(x, height = max(x))
+    #plt.plot(time[peaks], x[peaks],"*")
+    pfound = x[peaks[0]]
+    
+    return pfound
+
+#function to combine a Modules total for 3 Rogowski coils
+def addition(a,b,c):
+    '''
+    Finds the total peak current of the module of 4 high current wires  
+
+    Parameters: a, b, c, d - peak current values    
+
+    returns total current value
+    '''
+
+    addition = a + b + c;
+
+    return addition
 
 
-    #total_curr = addition(c_peak[0],d_peak[0],e_peak[0])     #total of N3 Capacitor bank
     
-    peak_array = a_peak,b_peak,c_peak,d_peak,e_peak #array to store module peaks
-    
-    #Plotting difference between each module for all files
-    '''plt.rcParams.update({'font.size': 35})
-    plt.rcParams.update({'lines.linewidth': 14})
-    plt.figure('Scaled Current between Modules')
-    plt.grid(True)
-    plt.xlabel('Modules')
-    x=[1,2,3,4,5]
-    labels = ['N3E', 'N3W', 'N1C', 'N2C', 'N3C']
-    plt.xticks(x, labels, rotation='vertical')
-    plt.ylabel('Current (A)')
-    plt.plot(x,[a_peak,b_peak,c_peak,d_peak,e_peak])
-    #plt.legend(['Shot 11']) # 45kV on 1/26/22
-    #plt.legend(['Shot 1','Shot 2','Shot 4','Shot 8','Shot 10','Shot 12']) #30kV on 1/26/22
-    #plt.legend(['Shot 1','Shot 3','Shot 7','Shot 9','Shot 11','Shot 13']) #30kV on 1/27/22
+#function to filter out raw data
+def filter(data):
+    fs = 2.5e9  #Sampling frequency
+    fc = 1e7   #cutoff frequency
+    w = fc/(fs/2)   #Normalize frequency
+    b,a = signal.butter(5,w,'low')
+    filtered = signal.filtfilt(b,a,data)
+
+    return filtered
+
+
+
+
+
+
+    '''27/22
     plt.legend(['Shot 4','Shot 6','Shot 10']) #45kV on 1/27/22'''
 
     #Print the current of each Module

@@ -52,7 +52,7 @@ def evaluate_model(X, y, model):
 
 calData = r'CalData_03142022.xlsx'
 
-data = pd.read_excel(calData) 
+data = pd.read_excel(calData)
 Num = np.linspace(1,13,12)
 df = pd.DataFrame(data, columns= ['Mod','%','Sensitivities','Length (Inch)','Resistance@ 1 kHz', 'Inductance @ 100 kHz'])
 
@@ -69,6 +69,7 @@ y = (10**9)*df['Sensitivities'][1:13]
 '''
 Linear Regression
 '''
+
 regr = linear_model.LinearRegression()
 regr.fit(X, y)
 [a, b, c] = regr.coef_
