@@ -63,6 +63,27 @@ def CFAR(s, Pfa, refLength, guardLength):
     plt.legend(['Signal','CFAR Threshold'])
     return cfarThreshold
 
+def CFAR_SS(s, Pfa, refLength, guardLength):
+    '''
+    Implements a CFAR algorithm on s and gives back the thresholding level for 
+    all points in s.
+    
+    s must be a [X,0] dimensional array
+    '''
+    cfarWin= np.ones([(refLength+guardLength)*2+1,1]);
+    cfarWin[refLength+1:2*refLength+1+2*guardLength]=0;
+    cfarWin = cfarWin[:,0]
+    alpha = refLength*2*(Pfa**(-1/(refLength*2)) - 1);
+    cfarWin=alpha*cfarWin/sum(cfarWin);
+    noiseLevel= np.convolve(np.abs(s),cfarWin,'same');
+    cfarThreshold = noiseLevel;
+    
+    plt.figure()
+    plt.plot(s);
+    plt.plot(cfarThreshold,'r--',linewidth= 2)
+    plt.legend(['Signal','CFAR Threshold'])
+    return cfarThreshold
+
 def integration(data, sense, time, tscale):
     '''
 
@@ -132,7 +153,7 @@ def find_peak(data_array):
 
     '''
     peaks, _ = find_peaks(data_array, height = max(data_array))
-    
+    peaks = peaks[0]
     pfound = data_array[peaks]
     
     return pfound

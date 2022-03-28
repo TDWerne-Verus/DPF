@@ -152,18 +152,33 @@ for file in csv_files:
         end = len(rogo_curr) - end_rev
         '''
         
+        PFa = 0.0001
+        refLength = 500
+        guardLength = 150000
         
-        th = rogo_curr > (0.70*max(rogo_curr))
-        th[1:][th[:-1] & th[1:]] = False
-        occurrences_of_true = np.where(th == True)
-        start = occurrences_of_true[0][0]
+        CFARThreshold = np.abs(CFAR_SS(rogo, PFa, refLength, guardLength))
+
+        for t in range(0,len(CFARThreshold)):
+            if ((rogo[t] > CFARThreshold[t]) or (rogo[t] < -1*CFARThreshold[t])):
+                start = t
+                break;
+        
         #start = start[0]
-        th = rogo_curr > (0.7*max(rogo_curr))
-        th = np.flip(th)
+        th = np.abs(rogo_curr) > (0.60*max(np.abs(rogo_curr)))
         th[1:][th[:-1] & th[1:]] = False
+        th = np.flip(th)
+        
         occurrences_of_true = np.where(th == True)
-        end_rev = occurrences_of_true[0][0]
+        
+        if(isinstance(occurrences_of_true, int)):
+            end_rev = occurrences_of_true
+        else:
+            end_rev = occurrences_of_true[0][0]
+            if (end_rev == 0):
+                end_rev = occurrences_of_true[0][1]
         end = len(rogo_curr) - end_rev
+        #end = end_rev
+        #end = end[0]
         
         
         #end = end[0]
