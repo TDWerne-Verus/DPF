@@ -82,19 +82,19 @@ for file in csv_files:
     rogo_curr4 = []  # rogowski current
     pass_rogo = []  # passivly integrated rogowski current
     pass_curr = []  # current of passive rogowski
-
+    
     # read the csv file
-    data = pd.read_csv(file)#, header=14)
+    data = pd.read_csv(file) #, header=14)
     count = count+1
     print(file)
-
+    
     # setting variables to channels and scale to base units
     df = pd.DataFrame(data, columns=['TIME', 'CH1', 'CH2', 'CH3', 'CH4'])
     time = df['TIME']  # seconds
     Fs = 1000e6
     time_fix = np.linspace(time[0], time[time.size-1],
-                           num=int(Fs*(time[time.size-1]-time[0])))
-
+                           num=int(time.size))
+    
     # --------Pearson Processing----------
     pear = df['CH1']  # attenuated voltage
     pear_att = att(pear, att_fact_pear)  # voltage
@@ -104,17 +104,18 @@ for file in csv_files:
     #pear_peak = find_peak(pear_curr)
     #print('Pearson current = %0.2f A' % pear_peak)
     #pear_array.append(pear_peak)
-
+    
     # --------Rogowski Voltage Processing----------
-
+    
     
     rogo2 = df['CH2'];                                    #K*dI/dt
-    
+    '''
     for x in range(1, len(rogo2)):
         if(rogo2[x] > 0.001):
             rogo2[x] = rogo2[x-1]
     if(rogo2[0] > 0.001):
         rogo2[0] = rogo2[1]
+    '''
     int_rogo2 = integration(rogo2, 1, time_fix, 1)         #K*I
     for x in range(len(int_rogo2)):
         rogo_curr2.append(int_rogo2[x]/4)                  #divided by 4 loops
@@ -131,9 +132,9 @@ for file in csv_files:
     #start = start[0]
     PFa = 0.0001
     refLength = 500
-    guardLength = 5
+    guardLength = 30000
     
-    CFARThreshold = np.abs(CFAR(rogo2, PFa, refLength, guardLength))
+    CFARThreshold = np.abs(CFAR_SS(rogo2, PFa, refLength, guardLength))
 
     for t in range(0,len(CFARThreshold)):
         if ((rogo2[t] > CFARThreshold[t]) or (rogo2[t] < -1*CFARThreshold[t])):
@@ -146,8 +147,14 @@ for file in csv_files:
     th = np.flip(th)
     
     occurrences_of_true = np.where(th == True)
-    end_rev = occurrences_of_true[0][0]
-    end = len(rogo_curr3) - end_rev
+    
+    if(isinstance(occurrences_of_true, int)):
+        end_rev = occurrences_of_true
+    else:
+        end_rev = occurrences_of_true[0][0]
+        if (end_rev == 0):
+            end_rev = occurrences_of_true[0][1]
+    end = len(rogo_curr2) - end_rev
     #end = end_rev
     #end = end[0]
         

@@ -109,20 +109,33 @@ for file in csv_files:
     int_rogo2 = integration(rogo2, 1, time_fix, 1)         #K*I
     for x in range(len(int_rogo2)):
         rogo_curr2.append(int_rogo2[x]/4)                  #divided by 4 loops
+    '''
     int_peak2 = find_peak(rogo_curr2)                      #peak of integrated current
     print('Integrated Rogwoski sensitivity current = %0.10f V*s' % int_peak2)
     int_array2.append(int_peak2)
+    '''
+    PFa = 0.0001
+    refLength = 100
+    guardLength = 6000
     
-    th = rogo_curr2 > (0.70*max(rogo_curr2))
-    th[1:][th[:-1] & th[1:]] = False
-    occurrences_of_true = np.where(th == True)
-    start = occurrences_of_true[0][0]
+    CFARThreshold = np.abs(CFAR_SS(rogo2, PFa, refLength, guardLength))
+
+    for t in range(0,len(CFARThreshold)):
+        if ((rogo2[t] > CFARThreshold[t]) or (rogo2[t] < -1*CFARThreshold[t])):
+            start = t
+            break;
     #start = start[0]
-    th = rogo_curr2 > (0.7*max(rogo_curr2))
+    th = np.abs(rogo_curr2) > (0.7*max(np.abs(rogo_curr2)))
     th = np.flip(th)
     th[1:][th[:-1] & th[1:]] = False
     occurrences_of_true = np.where(th == True)
-    end_rev = occurrences_of_true[0][0]
+    
+    if(isinstance(occurrences_of_true, int)):
+        end_rev = occurrences_of_true
+    else:
+        end_rev = occurrences_of_true[0][0]
+        if (end_rev == 0):
+            end_rev = occurrences_of_true[0][1]
     end = len(rogo_curr2) - end_rev
         
         
@@ -137,28 +150,38 @@ for file in csv_files:
     int_peaks2 = rogo_curr2[start:end]
     pear_peaks2 = pear_curr[start:end]
     print('Integrated Rogwoski sensitivity current = %0.10f V*s' % 
-          np.mean(int_peak2))
-    int_array.append(int_peak2)
+          np.mean(int_peaks2))
+    int_array.append(np.mean(int_peaks2))
     
     rogo3 = df['CH3'];                                    #K*dI/dt
     int_rogo3 = integration(rogo3, 1, time_fix, 1)         #K*I
     for x in range(len(int_rogo3)):
         rogo_curr3.append(int_rogo3[x]/4)                  #divided by 4 loops
+    '''
     int_peak3 = find_peak(rogo_curr3)                      #peak of integrated current
     print('Integrated Rogwoski sensitivity current = %0.10f V*s' % int_peak3)
     int_array3.append(int_peak3)
+    '''
     
-    th = rogo_curr3 > (0.70*max(rogo_curr3))
-    th[1:][th[:-1] & th[1:]] = False
-    occurrences_of_true = np.where(th == True)
-    start = occurrences_of_true[0][0]
+    CFARThreshold = np.abs(CFAR_SS(rogo3, PFa, refLength, guardLength))
+
+    for t in range(0,len(CFARThreshold)):
+        if ((rogo3[t] > CFARThreshold[t]) or (rogo3[t] < -1*CFARThreshold[t])):
+            start = t
+            break;
     #start = start[0]
-    th = rogo_curr3 > (0.7*max(rogo_curr3))
+    th = np.abs(rogo_curr3) > (0.7*max(np.abs(rogo_curr3)))
     th[1:][th[:-1] & th[1:]] = False
     th = np.flip(th)
 
     occurrences_of_true = np.where(th == True)
-    end_rev = occurrences_of_true[0][0]
+    
+    if(isinstance(occurrences_of_true, int)):
+        end_rev = occurrences_of_true
+    else:
+        end_rev = occurrences_of_true[0][0]
+        if (end_rev == 0):
+            end_rev = occurrences_of_true[0][1]
     end = len(rogo_curr3) - end_rev
         
         
@@ -173,27 +196,36 @@ for file in csv_files:
     int_peaks3 = rogo_curr3[start:end]
     pear_peaks3 = pear_curr[start:end]
     print('Integrated Rogwoski sensitivity current = %0.10f V*s' % 
-          np.mean(int_peak3))
-    int_array.append(int_peak3)
+          np.mean(int_peaks3))
+    int_array.append(np.mean(int_peaks3))
     
     rogo4 = df['CH4'];                                    #K*dI/dt
     int_rogo4 = integration(rogo4, 1, time_fix, 1)         #K*I
     for x in range(len(int_rogo4)):
         rogo_curr4.append(int_rogo4[x]/4)                  #divided by 4 loops
+        '''
     int_peak4 = find_peak(rogo_curr4)                      #peak of integrated current
     print('Integrated Rogwoski sensitivity current = %0.10f V*s' % int_peak4)
     int_array4.append(int_peak4)
+    '''
     
-    th = rogo_curr4 > (0.70*max(rogo_curr4))
-    th[1:][th[:-1] & th[1:]] = False
-    occurrences_of_true = np.where(th == True)
-    start = occurrences_of_true[0][0]
+    CFARThreshold = np.abs(CFAR_SS(rogo4, PFa, refLength, guardLength))
+
+    for t in range(0,len(CFARThreshold)):
+        if ((rogo4[t] > CFARThreshold[t]) or (rogo4[t] < -1*CFARThreshold[t])):
+            start = t
+            break;
     #start = start[0]
-    th = rogo_curr4 > (0.7*max(rogo_curr4))
+    th = np.abs(rogo_curr4) > (0.7*max(np.abs(rogo_curr4)))
     th = np.flip(th)
     th[1:][th[:-1] & th[1:]] = False
     occurrences_of_true = np.where(th == True)
-    end_rev = occurrences_of_true[0][1]
+    if(isinstance(occurrences_of_true, int)):
+        end_rev = occurrences_of_true
+    else:
+        end_rev = occurrences_of_true[0][0]
+        if (end_rev == 0):
+            end_rev = occurrences_of_true[0][1]
     end = len(rogo_curr4) - end_rev
         
         
@@ -208,8 +240,11 @@ for file in csv_files:
     int_peaks4 = rogo_curr4[start:end]
     pear_peaks4 = pear_curr[start:end]
     print('Integrated Rogwoski sensitivity current = %0.10f V*s' % 
-          np.mean(int_peak4))
-    
+          np.mean(int_peaks4))
+    int_array4.append(np.mean(int_peaks4))
+    int_peak2 = np.mean(int_peaks2)
+    int_peak3 = np.mean(int_peaks3)
+    int_peak4 = np.mean(int_peaks4)
     plt.plot(time, int_rogo2, time, int_rogo3, time, int_rogo4)
    #---------Sensitivity Calcualtions-----------
     sensitivity2 = (int_peak2/pear_peak)              #V*s/A 
