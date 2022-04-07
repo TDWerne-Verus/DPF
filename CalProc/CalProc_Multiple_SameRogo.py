@@ -31,7 +31,6 @@ import os
 from matplotlib import pyplot as plt
 import string
 
-
 # plot settings
 plt.rcParams.update({'font.size': 30})
 plt.rcParams.update({'lines.linewidth': 5})
@@ -53,7 +52,7 @@ count = 0
 pear_sense = 0.1  # pearson sensativity is 0.1 V/A
 att_fact_pear = 40.0  # attinuation factor of pearson
 load = 2  # dependant on what the pearson is expecting
-rise_time = 5.6*1e-6  # typical rise time of signal
+rise_time = 5.6 * 1e-6  # typical rise time of signal
 R = 50  # resistance in calibration system
 
 # Oscope scaling
@@ -91,23 +90,23 @@ for file in csv_files:
     pass_curr = []  # current of passive rogowski
 
     # read the csv file
-    data = pd.read_csv(file)#, header=14)
-    count = count+1
+    data = pd.read_csv(file)  # , header=14)
+    count = count + 1
     print(file)
 
     # setting variables to channels and scale to base units
     df = pd.DataFrame(data, columns=['TIME', 'CH1', 'CH2', 'CH3', 'CH4'])
     time = df['TIME']  # seconds
     Fs = 1000e6
-    time_fix = np.linspace(time[0], time[time.size-1],
-                           num=int(Fs*(time[time.size-1]-time[0])))
+    time_fix = np.linspace(time[0], time[time.size - 1],
+                           num=int(Fs * (time[time.size - 1] - time[0])))
 
     # --------Pearson Processing----------
     pear = df['CH1']  # attenuated voltage
     pear_att = att(pear, att_fact_pear)  # voltage
     for x in range(len(pear_att)):  # amperage
         # can increase speed by pre-allocating pear_curr, multiplied by 2 due to Pearson impedances
-        pear_curr.append(pear_att[x]*2/pear_sense)
+        pear_curr.append(pear_att[x] * 2 / pear_sense)
     pear_peak = find_peak(pear_curr)
     print('Pearson current = %0.2f A' % pear_peak)
     pear_array.append(pear_peak)
@@ -154,11 +153,11 @@ for file in csv_files:
     '''
     rogo3 = df['CH3']  # K*dI/dt
     for x in range(1, len(rogo3)):
-        if(rogo3[x] > 0.001):
-            rogo3[x] = rogo3[x-1]
+        if (rogo3[x] > 0.001):
+            rogo3[x] = rogo3[x - 1]
     int_rogo3 = integration(rogo3, 1, time_fix, 1)  # K*I
     for x in range(len(int_rogo3)):
-        rogo_curr3.append(int_rogo3[x]/4)  # divided by 4 loops
+        rogo_curr3.append(int_rogo3[x] / 4)  # divided by 4 loops
     int_peak3 = find_peak(rogo_curr3)  # peak of integrated current
     print('Integrated Rogwoski sensitivity current = %0.10f V*s' % int_peak3)
     int_array3.append(int_peak3)
@@ -168,28 +167,28 @@ for file in csv_files:
     occurrences_of_true = np.where(th == True)
     start = occurrences_of_true[0][0]
     '''
-    
+
     PFa = 0.0001
     refLength = 100
     guardLength = 5
-    
+
     CFARThreshold = CFAR(rogo3, PFa, refLength, guardLength)
 
-    for t in range(0,len(CFARThreshold)):
-        if ((rogo3[t] > CFARThreshold[t]) or (rogo3[t] < -1*CFARThreshold[t])):
+    for t in range(0, len(CFARThreshold)):
+        if ((rogo3[t] > CFARThreshold[t]) or (rogo3[t] < -1 * CFARThreshold[t])):
             start = t
             break;
-    
-    #start = start[0]
-    th = rogo_curr3 > (0.60*max(rogo_curr3))
+
+    # start = start[0]
+    th = rogo_curr3 > (0.60 * max(rogo_curr3))
     th[1:][th[:-1] & th[1:]] = False
     th = np.flip(th)
 
     occurrences_of_true = np.where(th == True)
     end_rev = occurrences_of_true[0][0]
     end = len(rogo_curr3) - end_rev
-    #end = end_rev
-    #end = end[0]
+    # end = end_rev
+    # end = end[0]
 
     '''
     #x_peaks = [enumerate(rogo_curr)]
@@ -243,13 +242,13 @@ for file in csv_files:
     '''
     plt.plot(time, int_rogo3)
     # , time, int_rogo3, time, int_rogo4)
-   # ---------Sensitivity Calcualtions-----------
+    # ---------Sensitivity Calcualtions-----------
     # sensitivity2 = (int_peak2/pear_peak)              #V*s/A
-    sensitivity3 = (int_peak3/pear_peak)  # V*s/A
+    sensitivity3 = (int_peak3 / pear_peak)  # V*s/A
     # sensitivity4 = (int_peak4/pear_peak)              #V*s/A
-    #print('Calculated Sensitivity CH2 = %0.12f V*s/A' % sensitivity2)
+    # print('Calculated Sensitivity CH2 = %0.12f V*s/A' % sensitivity2)
     print('Calculated Sensitivity CH3 = %0.12f V*s/A' % sensitivity3)
-    #print('Calculated Sensitivity CH4 = %0.12f V*s/A' % sensitivity4)
+    # print('Calculated Sensitivity CH4 = %0.12f V*s/A' % sensitivity4)
     '''
     sensitivities2 = int_peaks2
     for x in range(0,len(int_peaks2)):
@@ -261,7 +260,7 @@ for file in csv_files:
     '''
     sensitivities3 = int_peaks3
     for x in range(0, len(int_peaks3)):
-        sensitivities3[x] = (int_peaks3[x]/pear_peaks3[x])/(0.1)  # V*s/A
+        sensitivities3[x] = (int_peaks3[x] / pear_peaks3[x]) / (0.1)  # V*s/A
     sensitivity3 = np.mean(sensitivities3)
 
     print('Calculated Sensitivity = %0.13f V*s/A' % sensitivity)
@@ -289,19 +288,19 @@ for file in csv_files:
     plt.figure(file)
     plt.grid(True)
     plt.xlim(0, 20)
-    #time = [x*1e6 for x in time]
+    # time = [x*1e6 for x in time]
     plt.plot(time_fix, pear_curr, time_fix, rogo_curr3)
     # , time, pass_curr)
     plt.xlabel('Time(us)')
     plt.ylabel('Current (A))')
     plt.legend(['Pearson = %0.2f' % pear_peak,
-               'Mathematical Rogowski = %0.2f' % int_peak3])
+                'Mathematical Rogowski = %0.2f' % int_peak3])
     # , 'Passive Rogowski = %0.2f' % pass_peak])
 
     plt.figure(file)
     plt.grid(True)
     plt.xlim(0, 20)
-    #time = [x*1e6 for x in time]
+    # time = [x*1e6 for x in time]
     plt.plot(time_fix, rogo_curr3)
     # , time, rogo_curr3, time, rogo_curr4)
     plt.xlabel('Time(us)')
@@ -311,17 +310,17 @@ for file in csv_files:
 #----------------Difference Calculations-------------------
 '''
 pear_diff = (max(pear_array) - min(pear_array)) * \
-    100/(sum(pear_array)/len(pear_array))
-#int_diff = (max(int_array) - min(int_array))*100/(sum(int_array)/len(int_array))
-#pass_diff = (max(pass_array) - min(pass_array))*100/(sum(pass_array)/len(pass_array))
-#sense_diff = ((max(sense_array) - min(sense_array))*100)/(sum(sense_array)/len(sense_array))
-#print(pear_diff, int_diff, pass_diff, sense_diff)
-#print(pear_diff, sense_diff)
+            100 / (sum(pear_array) / len(pear_array))
+# int_diff = (max(int_array) - min(int_array))*100/(sum(int_array)/len(int_array))
+# pass_diff = (max(pass_array) - min(pass_array))*100/(sum(pass_array)/len(pass_array))
+# sense_diff = ((max(sense_array) - min(sense_array))*100)/(sum(sense_array)/len(sense_array))
+# print(pear_diff, int_diff, pass_diff, sense_diff)
+# print(pear_diff, sense_diff)
 '''
 average_sense2 = sum(sense_array2)/len(sense_array2)
 print('Average Sensitivity2', average_sense2)
 '''
-average_sense3 = sum(sense_array3)/len(sense_array3)
+average_sense3 = sum(sense_array3) / len(sense_array3)
 print('Average Sensitivity3', average_sense3)
 '''
 average_sense4 = sum(sense_array4)/len(sense_array4)
@@ -330,8 +329,8 @@ print('Average Sensitivity4', average_sense4)
 '''
 sense_diff2 = ((max(sense_array2) - min(sense_array2))*100)/(sum(sense_array2)/len(sense_array2))
 '''
-sense_diff3 = ((max(sense_array3) - min(sense_array3))*100)/ \
-        (sum(sense_array3)/len(sense_array3))
+sense_diff3 = ((max(sense_array3) - min(sense_array3)) * 100) / \
+              (sum(sense_array3) / len(sense_array3))
 '''
 sense_diff4 = ((max(sense_array4) - min(sense_array4))*100)/(sum(sense_array4)/len(sense_array4))
 '''
@@ -346,19 +345,19 @@ print(sense_diff4)
 average_sense2 = sum(sense_array2)/len(sense_array2)
 print('Average Sensitivity', average_sense2)
 '''
-average_sense3 = sum(sense_array3)/len(sense_array3)
+average_sense3 = sum(sense_array3) / len(sense_array3)
 print(average_sense3)
 '''
 average_sense4 = sum(sense_array4)/len(sense_array4)
 print( average_sense4)
 '''
-norm_array3 = sense_array3/average_sense3
+norm_array3 = sense_array3 / average_sense3
 
-file_num = []*count
+file_num = [] * count
 file_num = [string.ascii_uppercase[x] for x in range(0, count)]
 plt.figure('Sensativity Differences')
 plt.grid(True)
-plt.xlim(0, count-1)
+plt.xlim(0, count - 1)
 plt.bar(file_num, norm_array3)
 plt.plot(file_num, [1.05 for x in range(0, count)])
 plt.plot(file_num, [0.95 for x in range(0, count)])

@@ -6,7 +6,7 @@ In this version, the Rogowski coil data is plotted and the peaks are considered 
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
-import os 
+import os
 import glob
 import matplotlib.pyplot as plt
 from matplotlib.axis import Axis
@@ -21,16 +21,16 @@ from numpy import trapz
 import datetime
 from RogowskiDataProcessingFunctions import *
 import os
-from matplotlib import pyplot as plt 
+from matplotlib import pyplot as plt
 
-
-#plot settings
+# plot settings
 plt.rcParams.update({'font.size': 22})
 plt.rcParams.update({'lines.linewidth': 5})
 
-#variables
-sensitivity = 67.6301041736064e-9#0.217*1e-9; #V/(A/s)
-pico_0_sense = [67.6301041736064e-9,67.6301041736064e-9,67.6301041736064e-9,67.6301041736064e-9,67.6301041736064e-9,67.6301041736064e-9,67.6301041736064e-9,67.6301041736064e-9]
+# variables
+sensitivity = 67.6301041736064e-9  # 0.217*1e-9; #V/(A/s)
+pico_0_sense = [67.6301041736064e-9, 67.6301041736064e-9, 67.6301041736064e-9, 67.6301041736064e-9, 67.6301041736064e-9,
+                67.6301041736064e-9, 67.6301041736064e-9, 67.6301041736064e-9]
 pico_1_sense = []
 time = [];
 raw = [];
@@ -45,38 +45,38 @@ peak_N3W = []
 
 count = 0
 
-#import csv files from folder
-path = os.getcwd();                                      #currently working directory
-csv_files = glob.glob(os.path.join(path, "*.csv"));      #files in directory
+# import csv files from folder
+path = os.getcwd();  # currently working directory
+csv_files = glob.glob(os.path.join(path, "*.csv"));  # files in directory
 
 # Checksum function
 checksum(csv_files, path)
 # End of checksum function
 
-#loop over the list of csv files
+# loop over the list of csv files
 for file in csv_files:
-    #read the csv file
-    data = pd.read_csv(file) 
-    count = count+1
+    # read the csv file
+    data = pd.read_csv(file)
+    count = count + 1
     print(file)
-    
-    #setting variables to current channels
-    df = pd.DataFrame(data, columns= ['index','time','A','B','C','D','E','F','G','H'])
+
+    # setting variables to current channels
+    df = pd.DataFrame(data, columns=['index', 'time', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'])
 
     time = df['time']
-    
-    #pico scope 0
-    N3W = df['A'] #I
-    N3C = df['B'] #G
-    N3E = df['C'] #A
-    N2W = df['D'] #C
-    N2C = df['E'] #D
-    N2E = df['F'] #E
-    N1W = -df['G'] #P
-    N1C = df['F'] #F
-    
-    #Adding 40dB attenuation to files, all signals should be 50 Ohm terminated
-    #pico scope 0 
+
+    # pico scope 0
+    N3W = df['A']  # I
+    N3C = df['B']  # G
+    N3E = df['C']  # A
+    N2W = df['D']  # C
+    N2C = df['E']  # D
+    N2E = df['F']  # E
+    N1W = -df['G']  # P
+    N1C = df['F']  # F
+
+    # Adding 40dB attenuation to files, all signals should be 50 Ohm terminated
+    # pico scope 0
     N3W = att(N3W)
     N3C = att(N3C)
     N3E = att(N3E)
@@ -85,10 +85,10 @@ for file in csv_files:
     N2E = att(N2E)
     N1W = att(N1W)
     N1C = att(N1C)
-    #plt.plot(time, N3W, time, N3C, time, N3E, time, N2W, time, N2C, time, N2E, time, N1W, time, N1C)
-    #plt.legend(['N3W','N3C','N3E','N2W','N2C','N2E','N1W','N1C'])
-    
-    #Integrate filtered data to get current
+    # plt.plot(time, N3W, time, N3C, time, N3E, time, N2W, time, N2C, time, N2E, time, N1W, time, N1C)
+    # plt.legend(['N3W','N3C','N3E','N2W','N2C','N2E','N1W','N1C'])
+
+    # Integrate filtered data to get current
     N3W_int = integration(N3W, time, pico_0_sense[0])
     N3C_int = integration(N3C, time, pico_0_sense[1])
     N3E_int = integration(N3E, time, pico_0_sense[2])
@@ -98,10 +98,10 @@ for file in csv_files:
     N1W_int = integration(N1W, time, pico_0_sense[6])
     N1C_int = integration(N1C, time, pico_0_sense[7])
 
-    #Print out the max of each current plot and total
+    # Print out the max of each current plot and total
     peaks_0 = curr_peaks(N3W_int, N3C_int, N3E_int, N2W_int, N2C_int, N2E_int, N1W_int, N1C_int)
-    
-    #Creates list of currents for each module for a full day's shot series      
+
+    # Creates list of currents for each module for a full day's shot series
     peak_N3W.append(peaks_0[0])
     peak_N3C.append(peaks_0[1])
     peak_N3E.append(peaks_0[2])
@@ -110,8 +110,7 @@ for file in csv_files:
     peak_N2E.append(peaks_0[5])
     peak_N1W.append(peaks_0[6])
     peak_N1C.append(peaks_0[7])
-    
-    
+
     '''
     #pico scope 1 
     S3W = df['A'] #K
@@ -158,7 +157,7 @@ for file in csv_files:
     peak_S1C.append(peaks_1[7])
     
     '''
-   
+
     '''
     #Print out the max of each voltage
     voltage = curr_peaks(N3E,N3C,N2C,N1C,N3W)
@@ -168,10 +167,8 @@ for file in csv_files:
     
     #plt.plot(time, N3W_int)
     '''
-    
 
-    
-    #Calculates the differential between bank N3 modules
+    # Calculates the differential between bank N3 modules
     '''dif12 = (peaks[4]-peaks[3])/peaks[3]
     dif23 = (peaks[3]-peaks[2])/peaks[2]
     dif13 = (peaks[2]-peaks[4])/peaks[4]
@@ -182,57 +179,57 @@ for file in csv_files:
     print('N1C to N3C %f' %dif13)
     '''
 
-    #Plot raw data
+    # Plot raw data
     plt.figure()
     plt.grid(True)
-    plt.xlim(0,2e-5)
-    plt.plot(time,N3E_filt)#time,S2C,time,N3C, time, N2C, time, N1C, time,N3W)
+    plt.xlim(0, 2e-5)
+    plt.plot(time, N3E_filt)  # time,S2C,time,N3C, time, N2C, time, N1C, time,N3W)
     plt.xlabel('Time(s)')
     plt.ylabel('Current (A))')
-    #plt.legend(['N3E','S2C','N3C','N2C','N1C','N3W'])
-  
-    #Plot filtered raw data
-    #plt.figure()
-    #plt.grid(True)
-    #plt.xlim(0,2e-5)
-    #plt.plot(time,N3E_filt,time,S2C_filt,time,N3C_filt, time, N2C_filt, time, N1C_filt, time,N3W_filt)
-    #plt.xlabel('Time(s)')
-    #plt.ylabel('Current (A))')
-    #plt.legend(['N3E','S2C','N3C','N2C','N1C','N3W'])
-    
-    
-    #Plot integrated Rogowski coil as current
+    # plt.legend(['N3E','S2C','N3C','N2C','N1C','N3W'])
+
+    # Plot filtered raw data
+    # plt.figure()
+    # plt.grid(True)
+    # plt.xlim(0,2e-5)
+    # plt.plot(time,N3E_filt,time,S2C_filt,time,N3C_filt, time, N2C_filt, time, N1C_filt, time,N3W_filt)
+    # plt.xlabel('Time(s)')
+    # plt.ylabel('Current (A))')
+    # plt.legend(['N3E','S2C','N3C','N2C','N1C','N3W'])
+
+    # Plot integrated Rogowski coil as current
     plt.figure(file)
     plt.grid(True)
-    plt.xlim(0,2e-5)
+    plt.xlim(0, 2e-5)
     plt.plot(time, N3E_int, time, N3W_int, time, N1C_int, time, N2C_int, time, N3C_int)
     plt.xlabel('Time(s)')
     plt.ylabel('Current (A)')
-    plt.legend(['N3E Current, Peak = %.2f' %peaks[0],'N3W Current, Peak = %.2f' %peaks[1],'N1C Current, Peak = %.2f' %peaks[2], 'N2C Current, Peak = %.2f' %peaks[3],'N3C Current, Peak = %.2f' %peaks[4]])
-   
+    plt.legend(['N3E Current, Peak = %.2f' % peaks[0], 'N3W Current, Peak = %.2f' % peaks[1],
+                'N1C Current, Peak = %.2f' % peaks[2], 'N2C Current, Peak = %.2f' % peaks[3],
+                'N3C Current, Peak = %.2f' % peaks[4]])
+
     ''' plt.figure('Scaled Current between Modules')
     plt.grid(True)
     plt.xlim(0,2e-5)
     plt.xlabel('Shot #')
     plt.ylabel('Current (A)')
     plt.plot()'''
-    #plt.figure
-    #plt.plot([1,2,3,4,5,6],peaks)
-    #plt.xlabel('Peaks of Channels')
-    #plt.ylabel('Current (A)')
-    #ax1.set_xlabel('Time(s)')
-    #ax1.set_ylabel('Current(mV)')
-    #plt.plot(time, int_A)
-    #plt.legend(['Passive Integrator'])
+    # plt.figure
+    # plt.plot([1,2,3,4,5,6],peaks)
+    # plt.xlabel('Peaks of Channels')
+    # plt.ylabel('Current (A)')
+    # ax1.set_xlabel('Time(s)')
+    # ax1.set_ylabel('Current(mV)')
+    # plt.plot(time, int_A)
+    # plt.legend(['Passive Integrator'])
 
-    #ax2 = ax1.twinx()    #instantiate a second azes that shares the same x-axis
-    #ax2.set_ylabel('Current(A)')
-    
-    #plt.plot(time, east, time, east_filt)
-    #plt.xlabel('Time(s)')
-    #plt.ylabel('Voltage(mV)')
+    # ax2 = ax1.twinx()    #instantiate a second azes that shares the same x-axis
+    # ax2.set_ylabel('Current(A)')
 
-    
+    # plt.plot(time, east, time, east_filt)
+    # plt.xlabel('Time(s)')
+    # plt.ylabel('Voltage(mV)')
+
 '''
 #Averaging the N3E module currents
 N3Eavg = [sum(peak_N3E)/count]
@@ -325,8 +322,3 @@ plt.legend(['N1C','N2C','N3C'])
 -
 '''
 plt.show()
-  
-
-    
-
- 
