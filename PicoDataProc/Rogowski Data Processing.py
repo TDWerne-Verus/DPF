@@ -23,7 +23,9 @@ from RogowskiDataProcessingFunctions import *
 
 
 #import csv files from folder
-path = os.getcwd();                                     #currently working directory
+path = os.getcwd();       
+folder = '\\20220329'
+path = path + folder                              #currently working directory
 csv_files = glob.glob(os.path.join(path, "*.csv"));      #files in directory
 
 #plot settings
@@ -37,12 +39,13 @@ raw = [];
 intRog = [];
 peak_N3E = []
 peak_S2C = []
+rogos= np.array(float)
 peak_N3C = []
 peak_N2C = []
 peak_N1C = []
 peak_N3W = []
 count = 0
-
+n = 0
 #loop over the list of csv files
 for file in csv_files:
     #read the csv file
@@ -89,6 +92,21 @@ for file in csv_files:
     N2C_int = integration(N2C_filt, time, sensitivity)
     N1C_int = integration(N1C_filt, time, sensitivity)
     N3W_int = integration(N3W_filt, time, sensitivity)
+    '''
+    rogos[n,:] = N3E_int
+    n+= 1
+    rogos[n,:] = S2C_int
+    n+= 1
+    rogos[n,:] = N3C_int
+    n += 1
+    rogos[n,:] = N2C_int
+    n += 1
+    rogos[n,:] = N1C_int
+    n += 1
+    rogos[n,:] = N3W_int
+    n += 1
+    
+    '''
 
     #Print out the max of each current plot and total
     peaks = curr_peaks(N3E_int, N3W_int, N1C_int, N2C_int, N3C_int, S2C_int)
@@ -122,13 +140,25 @@ for file in csv_files:
     #Plot integrated Rogowski coil as current
     plt.figure(file)
     plt.grid(True)
-    plt.xlim(0,2e-5)
+    plt.xlim(0.4E-5,0.7e-5)
     #plt.plot(time,N3E_int,time,S2C_int,time,N3C_int, time, N2C_int, time, N1C_int, time, N3W_int)
-    plt.plot(time, N3E_int, time, N3W_int, time, N1C_int, time, N2C_int, time, N3C_int)
+    '''
+    plt.plot(time[], N3E_int, time, N3W_int, time, N1C_int, time, N2C_int, time, N3C_int)
+    '''
+    
+    plt.plot(time[9500:14500], N3E[9500:14500], time[9500:14500],
+             N3W[9500:14500],
+             time[9500:14500], N1C[9500:14500], time[9500:14500],
+             N2C[9500:14500],
+             time[9500:14500], N3C[9500:14500])
+    
+    
+    
     plt.xlabel('Time(s)')
     plt.ylabel('Current (A)')
     #plt.legend(['N3E = %.2f' %peaks[0] ,'S2C = %.2f' %0,'N3C = %.2f' %peaks[2] ,'N2C = %.2f' %peaks[3] ,'N1C = %.2f' %peaks[4],'N3W = %.2f' %peaks[5]])
-    plt.legend(['N3E Current, Peak = %.2f' %peaks[0],'N3W Current, Peak = %.2f' %peaks[1],'N1C Current, Peak = %.2f' %peaks[2], 'N2C Current, Peak = %.2f' %peaks[3],'N3C Current, Peak = %.2f' %peaks[4]])
+    #plt.legend(['N3E Current','N3W Current','N1C Current', 'N2C Current',
+    #            'N3C Current'])
    
     #plt.figure
     #plt.plot([1,2,3,4,5,6],peaks)
@@ -152,6 +182,17 @@ for file in csv_files:
     print(df)
     df.to_excel('test.xlsx',sheet_name = 'sheet1', index = False)'''
 
+
+'''
+plt.figure('All Rogos Shot 13 03292022')
+[R, C] = rogos.size()
+for x in range(0,R-1):
+    plt.plot(time,rogos[n,])
+    
+'''
+
+
+'''
 plt.figure('N3E Coil')
 plt.plot(range(0,count), peak_N3E)
 plt.xlabel('File Index')
@@ -195,6 +236,7 @@ plt.ylabel('Current (A)')
 var = (max(peak_N3W)-min(peak_N3W))*100 /min(peak_N3W)
 plt.legend(['Percent Variation = %6.2f' %var])
 
+'''
 '''
 plt.figure('Scaled Current Comparisons')
 plt.plot(range(1,count+1), peak_N1C, range(1,count+1), peak_N2C, range(1,count+1), peak_N3C)

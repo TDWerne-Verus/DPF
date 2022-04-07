@@ -31,7 +31,6 @@ import os
 from matplotlib import pyplot as plt
 import string
 
-
 # plot settings
 plt.rcParams.update({'font.size': 30})
 plt.rcParams.update({'lines.linewidth': 5})
@@ -53,7 +52,7 @@ count = 0
 pear_sense = 0.1  # pearson sensativity is 0.1 V/A
 att_fact_pear = 40.0  # attinuation factor of pearson
 load = 2  # dependant on what the pearson is expecting
-rise_time = 5.6*1e-6  # typical rise time of signal
+rise_time = 5.6 * 1e-6  # typical rise time of signal
 R = 50  # resistance in calibration system
 
 # Oscope scaling
@@ -89,33 +88,32 @@ for file in csv_files:
     rogo_curr4 = []  # rogowski current
     pass_rogo = []  # passivly integrated rogowski current
     pass_curr = []  # current of passive rogowski
-    
+
     # read the csv file
-    data = pd.read_csv(file) #, header=14)
-    count = count+1
+    data = pd.read_csv(file)  # , header=14)
+    count = count + 1
     print(file)
-    
+
     # setting variables to channels and scale to base units
     df = pd.DataFrame(data, columns=['TIME', 'CH1', 'CH2', 'CH3', 'CH4'])
     time = df['TIME']  # seconds
     Fs = 1000e6
-    time_fix = np.linspace(time[0], time[time.size-1],
+    time_fix = np.linspace(time[0], time[time.size - 1],
                            num=int(time.size))
-    
+
     # --------Pearson Processing----------
     pear = df['CH1']  # attenuated voltage
     pear_att = att(pear, att_fact_pear)  # voltage
     for x in range(len(pear_att)):  # amperage
         # can increase speed by pre-allocating pear_curr, multiplied by 2 due to Pearson impedances
-        pear_curr.append(pear_att[x]*2/pear_sense)
-    #pear_peak = find_peak(pear_curr)
-    #print('Pearson current = %0.2f A' % pear_peak)
-    #pear_array.append(pear_peak)
-    
+        pear_curr.append(pear_att[x] * 2 / pear_sense)
+    # pear_peak = find_peak(pear_curr)
+    # print('Pearson current = %0.2f A' % pear_peak)
+    # pear_array.append(pear_peak)
+
     # --------Rogowski Voltage Processing----------
-    
-    
-    rogo2 = df['CH2'];                                    #K*dI/dt
+
+    rogo2 = df['CH2'];  # K*dI/dt
     '''
     for x in range(1, len(rogo2)):
         if(rogo2[x] > 0.001):
@@ -123,56 +121,56 @@ for file in csv_files:
     if(rogo2[0] > 0.001):
         rogo2[0] = rogo2[1]
     '''
-    int_rogo2 = integration(rogo2, 1, time_fix, 1)         #K*I
+    int_rogo2 = integration(rogo2, 1, time_fix, 1)  # K*I
     for x in range(len(int_rogo2)):
-        rogo_curr2.append(int_rogo2[x]/4)                  #divided by 4 loops
-    #int_peak2 = find_peak(rogo_curr2)                      #peak of integrated current
-    #print('Integrated Rogwoski sensitivity current = %0.10f V*s' % int_peak2)
-    #int_array2.append(int_peak2)
-    
+        rogo_curr2.append(int_rogo2[x] / 4)  # divided by 4 loops
+    # int_peak2 = find_peak(rogo_curr2)                      #peak of integrated current
+    # print('Integrated Rogwoski sensitivity current = %0.10f V*s' % int_peak2)
+    # int_array2.append(int_peak2)
+
     '''
     th = rogo_curr2 > (0.70*max(rogo_curr2))
     th[1:][th[:-1] & th[1:]] = False
     occurrences_of_true = np.where(th == True)
     start = occurrences_of_true[0][0]
     '''
-    #start = start[0]
+    # start = start[0]
     PFa = 0.0001
     refLength = 500
     guardLength = 30000
-    
+
     CFARThreshold = np.abs(CFAR_SS(rogo2, PFa, refLength, guardLength))
 
-    for t in range(0,len(CFARThreshold)):
-        if ((rogo2[t] > CFARThreshold[t]) or (rogo2[t] < -1*CFARThreshold[t])):
+    for t in range(0, len(CFARThreshold)):
+        if ((rogo2[t] > CFARThreshold[t]) or (rogo2[t] < -1 * CFARThreshold[t])):
             start = t
             break;
-    
-    #start = start[0]
-    th = np.abs(rogo_curr2) > (0.60*max(np.abs(rogo_curr2)))
+
+    # start = start[0]
+    th = np.abs(rogo_curr2) > (0.60 * max(np.abs(rogo_curr2)))
     th[1:][th[:-1] & th[1:]] = False
     th = np.flip(th)
-    
+
     occurrences_of_true = np.where(th == True)
-    
-    if(isinstance(occurrences_of_true, int)):
+
+    if (isinstance(occurrences_of_true, int)):
         end_rev = occurrences_of_true
     else:
         end_rev = occurrences_of_true[0][0]
         if (end_rev == 0):
             end_rev = occurrences_of_true[0][1]
     end = len(rogo_curr2) - end_rev
-    #end = end_rev
-    #end = end[0]
-        
+    # end = end_rev
+    # end = end[0]
+
     x_peaks2 = [x for x in range(start, end)]
     int_peaks2 = rogo_curr2[start:end]
     pear_peaks2 = pear_curr[start:end]
     print('Integrated Rogwoski sensitivity current = %0.10f V*s' %
           np.mean(int_peaks2))
-        
-        #end = end[0]
-    
+
+    # end = end[0]
+
     '''
     #x_peaks = [enumerate(rogo_curr)]
     y_peaks = rogo_curr[x_peaks[0]:x_peaks[-1]]
@@ -205,7 +203,7 @@ for file in csv_files:
     occurrences_of_true = np.where(th == True)
     start = occurrences_of_true[0][0]
     '''
-    
+
     '''
     PFa = 0.0001
     refLength = 100
@@ -282,22 +280,22 @@ for file in csv_files:
     '''
     plt.plot(time, int_rogo2)
     # , time, int_rogo3, time, int_rogo4)
-   # ---------Sensitivity Calcualtions-----------
+    # ---------Sensitivity Calcualtions-----------
     # sensitivity2 = (int_peak2/pear_peak)              #V*s/A
     # sensitivity3 = (int_peak3/pear_peak)  # V*s/A
     # sensitivity4 = (int_peak4/pear_peak)              #V*s/A
     # print('Calculated Sensitivity CH2 = %0.12f V*s/A' % sensitivity2)
-    #print('Calculated Sensitivity CH3 = %0.12f V*s/A' % sensitivity3)
-    #print('Calculated Sensitivity CH4 = %0.12f V*s/A' % sensitivity4)
-    
+    # print('Calculated Sensitivity CH3 = %0.12f V*s/A' % sensitivity3)
+    # print('Calculated Sensitivity CH4 = %0.12f V*s/A' % sensitivity4)
+
     sensitivities2 = int_peaks2
-    for x in range(0,len(int_peaks2)):
-        sensitivities2[x] = (int_peaks2[x]/pear_peaks2[x])/(0.1)              #V*s/A 
+    for x in range(0, len(int_peaks2)):
+        sensitivities2[x] = (int_peaks2[x] / pear_peaks2[x]) / (0.1)  # V*s/A
     sensitivity2 = np.mean(sensitivities2)
-    
+
     print('Calculated Sensitivity = %0.12f V*s/A' % sensitivity2)
     sense_array2.append(sensitivity2)
-    
+
     '''
     sensitivities3 = int_peaks3
     for x in range(0, len(int_peaks3)):
@@ -330,19 +328,19 @@ for file in csv_files:
     plt.figure(file)
     plt.grid(True)
     plt.xlim(0, 20)
-    #time = [x*1e6 for x in time]
+    # time = [x*1e6 for x in time]
     plt.plot(time_fix, pear_curr, time_fix, rogo_curr2)
     # , time, pass_curr)
     plt.xlabel('Time(us)')
     plt.ylabel('Current (A))')
     plt.legend(['Pearson = %0.2f' % (max(pear_curr)),
-               'Mathematical Rogowski = %0.2f' % max(np.abs(rogo_curr2))])
+                'Mathematical Rogowski = %0.2f' % max(np.abs(rogo_curr2))])
     # , 'Passive Rogowski = %0.2f' % pass_peak])
 
     plt.figure(file)
     plt.grid(True)
     plt.xlim(0, 20)
-    #time = [x*1e6 for x in time]
+    # time = [x*1e6 for x in time]
     plt.plot(time_fix, rogo_curr2)
     # , time, rogo_curr3, time, rogo_curr4)
     plt.xlabel('Time(us)')
@@ -355,13 +353,13 @@ for file in csv_files:
 pear_diff = (max(pear_array) - min(pear_array)) * \
     100/(sum(pear_array)/len(pear_array))
 '''
-#int_diff = (max(int_array) - min(int_array))*100/(sum(int_array)/len(int_array))
-#pass_diff = (max(pass_array) - min(pass_array))*100/(sum(pass_array)/len(pass_array))
-#sense_diff = ((max(sense_array) - min(sense_array))*100)/(sum(sense_array)/len(sense_array))
-#print(pear_diff, int_diff, pass_diff, sense_diff)
-#print(pear_diff, sense_diff)
+# int_diff = (max(int_array) - min(int_array))*100/(sum(int_array)/len(int_array))
+# pass_diff = (max(pass_array) - min(pass_array))*100/(sum(pass_array)/len(pass_array))
+# sense_diff = ((max(sense_array) - min(sense_array))*100)/(sum(sense_array)/len(sense_array))
+# print(pear_diff, int_diff, pass_diff, sense_diff)
+# print(pear_diff, sense_diff)
 
-average_sense2 = sum(sense_array2)/len(sense_array2)
+average_sense2 = sum(sense_array2) / len(sense_array2)
 print('Average Sensitivity2', average_sense2)
 '''
 average_sense3 = sum(sense_array3)/len(sense_array3)
@@ -372,7 +370,7 @@ average_sense4 = sum(sense_array4)/len(sense_array4)
 print('Average Sensitivity4', average_sense4)
 '''
 
-sense_diff2 = ((max(sense_array2) - min(sense_array2))*100)/(sum(sense_array2)/len(sense_array2))
+sense_diff2 = ((max(sense_array2) - min(sense_array2)) * 100) / (sum(sense_array2) / len(sense_array2))
 '''
 sense_diff3 = ((max(sense_array3) - min(sense_array3))*100)/ \
         (sum(sense_array3)/len(sense_array3))
@@ -389,7 +387,7 @@ print(sense_diff3)
 print(sense_diff4)
 '''
 
-average_sense2 = sum(sense_array2)/len(sense_array2)
+average_sense2 = sum(sense_array2) / len(sense_array2)
 print('Average Sensitivity', average_sense2)
 '''
 average_sense3 = sum(sense_array3)/len(sense_array3)
@@ -399,13 +397,13 @@ print(average_sense3)
 average_sense4 = sum(sense_array4)/len(sense_array4)
 print( average_sense4)
 '''
-norm_array2 = sense_array2/average_sense2
+norm_array2 = sense_array2 / average_sense2
 
-file_num = []*count
+file_num = [] * count
 file_num = [string.ascii_uppercase[x] for x in range(0, count)]
 plt.figure('Sensativity Differences')
 plt.grid(True)
-plt.xlim(0, count-1)
+plt.xlim(0, count - 1)
 plt.bar(file_num, norm_array2)
 plt.plot(file_num, [1.05 for x in range(0, count)])
 plt.plot(file_num, [0.95 for x in range(0, count)])

@@ -25,22 +25,19 @@ from numpy import trapz
 import datetime
 from ProcessingFunctions import *
 
-size = [1,10000]
+size = [1, 10000]
 x_t = np.zeros(size)
-w_t = np.random.randn(size[0],size[1])
+w_t = np.random.randn(size[0], size[1])
 
-x_t[0,4500] = 50
+x_t[0, 4500] = 50
 s_t = x_t + w_t
-s_t = s_t[0,:]
+s_t = s_t[0, :]
 Pfa = 0.001
 refLength = 50
 guardLength = 1
 CFARThreshold = CFAR(s_t, Pfa, refLength, guardLength)
 
-for t in range(0,len(CFARThreshold)):
+for t in range(0, len(CFARThreshold)):
     if (s_t[t] > CFARThreshold[t]):
         start = t
         break;
-        
-
-        
