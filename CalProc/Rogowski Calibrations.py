@@ -32,7 +32,11 @@ from sklearn.linear_model import HuberRegressor
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import TheilSenRegressor
 from sklearn.pipeline import Pipeline
+from sklearn.linear_model import Ridge
 import openpyxl
+from patsy import dmatrices
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 # plot settings
 plt.rcParams.update({'font.size': 30})
@@ -296,11 +300,13 @@ for file in csv_files:
         sensitivities2[x] = int_peaks2[x] / (pear_peaks2[x] / (0.1))  # V*s/A
     sensitivity2 = np.mean(sensitivities2)
     time_scale = time_fix[1] - time_fix[0]
-    deriv = derivate(time_fix, 1, time_scale)
+    
+    '''
     for x in range(0, len(deriv)):
         if (np.isinf(deriv[x])):
             deriv[x] = np.mean(diff(rogo_curr2[start + x:start + x + 2]) / time_scale)
     deriv = deriv[start:end]
+    '''
     X = np.asarray(rogo_curr2[start:end])
 
     if (isinstance(X, list) == True):
@@ -309,74 +315,140 @@ for file in csv_files:
     else:
         print('IS not list')
     X = np.reshape(X, (-1, 1))
-    I = np.argsort(X)
+    I = np.reshape(np.argsort(X.ravel()),(-1,1))
     # deriv= np.append(deriv, deriv[-1])
-    X = np.row_stack([rogo2[start:end], deriv])
+    
+    th = rogo2[start:end] > (0)
+    th[1:][th[:-1] & th[1:]] = False
+    #th = np.flip(th)
+
+    occurrences_of_true = np.where(th == True)
+    
+    rogo_cat = rogo2[start:end]
+    for i in range(0,len(occurrences_of_true)):
+        if(occurrences_of_true[i] == True):
+            rogo_cat[i] = 1
+    
+    th = rogo2[start:end] == (0)
+    th[1:][th[:-1] & th[1:]] = False
+    #th = np.flip(th)
+
+    occurrences_of_true = np.where(th == True)
+    
+    for i in range(0,len(occurrences_of_true)):
+        if(occurrences_of_true[i] == True):
+            rogo_cat[i] = 0
+    
+    th = rogo2[start:end] < (0)
+    th[1:][th[:-1] & th[1:]] = False
+    #th = np.flip(th)
+
+    occurrences_of_true = np.where(th == True)
+    
+    for i in range(0,len(occurrences_of_true)):
+        if(occurrences_of_true[i] == True):
+            rogo_cat[i] = -1
+    
+    X = np.row_stack([rogo2[start:end], int_rogo2[start:end], rogo_cat])
     if (isinstance(X, list) == True):
         print('Is list')
         X = np.concatenate(X, axis=1)
     else:
         print('IS not list')
     # X = np.concatenate(X,axis=0)
-    X = X.reshape((-1, 2))
-
-    X = X.reshape((-1, 2))
+    X = X.reshape((-1, 3))
+    
+    X = X.reshape((-1, 3))
     y = np.array(sensitivities2)
     '''
     for idx in I:
         y[idx] = y
         x[idx,1] =
     '''
+    
     y = y[I]
     X[:, 0:1] = X[I, 0]
     X[:, 1:2] = X[I, 1]
+    X[:, 2:3] = X[I, 2]
     # y = y.reshape((-1,1))
     # y = np.concatenate(y, axis=0)
     y = np.reshape(y, (-1, 1))
-    X = np.reshape(X, (-1, 2))
+    X = np.reshape(X, (-1, 3))
     regr = linear_model.LinearRegression()
     print('X type:', type(X))
     print('y type:', type(y))
-    regr.fit(X, y)
+    '''
+    Degree of Polynomial regression
+    '''
+    poly3 = PolynomialFeatures(degree=15)
+    Xt3 = poly3.fit_transform(X)
+    regr.fit(Xt3, y)
     Coefs = regr.coef_
+    
+    
     print('Slope:', Coefs)
     intercept = regr.intercept_
     print('Intercept:', intercept)
-    y_hat = regr.predict(X)
-    r2 = regr.score(X, y)
+    y_hat = regr.predict(Xt3)
+    r2 = regr.score(Xt3, y)
     print(r2)
-    results = evaluate_model(X, y, regr)
+    results = evaluate_model(Xt3, y, regr)
     print('Mean Linear MAE: %.3f (%.3f)' % (np.mean(results), np.std(results)))
 
     plt.figure()
+    fig, ax = plt.subplots()
     plt.title('Regression Analysis')
     X_rogo = np.asarray(rogo_curr2[start:end])
-    X_rogo = np.reshape(X_rogo, (-1, 1))
+    X_rogo = X_rogo[I]
+    X_rogo = X_rogo.ravel()
     Xrogo_size = np.size(X_rogo)
     print('Rogo size: ', Xrogo_size)
 
     print('y size: ', y.size)
-    plt.scatter(X_rogo, y)  # ,'r')
-    plt.plot(X[:, 1], y_hat.reshape(-1), 'b')
-
+    y_raveled = y.ravel()
+    plt.scatter(X_rogo, y_raveled)  # ,'r')
+    y_hat_raveled = y_hat.ravel()
+    plt.plot(X_rogo, y_hat_raveled, 'b')
+    ax.margins(x=0,y=0)
+    
+    
+    
+    print('Done plotting regression')
     Huber = HuberRegressor()
     # xaxis = np.arange(X.min(), X.max(), 0.01)
-    Huber.fit(X, y)
+    Huber.fit(Xt3, y.ravel())
+    print('Done fitting Huber')
     CoefsHub = Huber.coef_
-    yH = Huber.predict(X)
-    results = evaluate_model(X, y, Huber)
+    yH = Huber.predict(Xt3)
+    print('Done Predicting Huber')
+    results = evaluate_model(Xt3, y, Huber)
     print('Mean Huber MAE: %.3f (%.3f)' % (np.mean(results), np.std(results)))
     # plot the line of best fit
 
     plt.figure()
     plt.title('Huber Analysis')
-    plt.plot(X, yH, 'b')
+    plt.plot(X_rogo, yH, 'b')
     plt.scatter(X_rogo, y)  # ,'r')
     # plt.legend(['Estimate Huber', 'Measured'])
 
     print('Calculated Sensitivity = %0.12f V*s/A' % sensitivity2)
     sense_array2.append(sensitivity2)
 
+
+    Ridger = Ridge()
+    Ridger.fit(Xt3,y.ravel())
+    
+    CoefsRidg = Ridger.coef_
+    yR = Ridger.predict(Xt3)
+    
+    results = evaluate_model(Xt3, y, Ridger)
+    print('Mean Ridge MAE: %.3f (%.3f)' % (np.mean(results), np.std(results)))
+    # plot the line of best fit
+    
+    plt.figure()
+    plt.title('Ridge Analysis')
+    plt.plot(X_rogo, yR, 'b')
+    plt.scatter(X_rogo, y)  # ,'r')
     '''
     sensitivities3 = int_peaks3
     for x in range(0, len(int_peaks3)):
@@ -405,9 +477,10 @@ for file in csv_files:
     
     #---------------Plotting---------------------
     '''
-    plt.figure(file)
+    plt.figure()
+    plt.title(file)
     plt.grid(True)
-    plt.xlim(0, 20)
+    #plt.xlim(0, 20)
     # time = [x*1e6 for x in time]
     plt.plot(time_fix, pear_curr, time_fix, rogo_curr2)
     # , time, pass_curr)
@@ -417,9 +490,9 @@ for file in csv_files:
                 'Mathematical Rogowski = %0.2f' % max(np.abs(rogo_curr2))])
     # , 'Passive Rogowski = %0.2f' % pass_peak])
 
-    plt.figure(file)
+    #plt.figure(file)
     plt.grid(True)
-    plt.xlim(0, 20)
+    #plt.xlim(0, 20)
     # time = [x*1e6 for x in time]
     plt.plot(time_fix, rogo_curr2)
     # , time, rogo_curr3, time, rogo_curr4)
