@@ -308,6 +308,56 @@ def filter(data):
 
     return peak_array
 
+def butter_highpass(interval, sampling_rate, cutoff, order=5):
+    nyq = sampling_rate * 0.5
+
+    stopfreq = float(cutoff)
+    cornerfreq = 0.4 * stopfreq  # (?)
+
+    ws = cornerfreq/nyq
+    wp = stopfreq/nyq
+
+    # for bandpass:
+    # wp = [0.2, 0.5], ws = [0.1, 0.6]
+
+    N, wn = signal.buttord(wp, ws, 3, 16)   # (?)
+
+    # for hardcoded order:
+    # N = order
+
+    b, a = signal.butter(N, wn, btype='high')   # should 'high' be here for bandpass?
+    sf = signal.lfilter(b, a, interval)
+    return sf
+
+def butter_lowpass(interval, sampling_rate, cutoff, order=5):
+    nyq = sampling_rate * 0.5
+
+    stopfreq = float(cutoff)
+    cornerfreq = 0.4 * stopfreq  # (?)
+
+    ws = cornerfreq/nyq
+    wp = stopfreq/nyq
+
+    # for bandpass:
+    # wp = [0.2, 0.5], ws = [0.1, 0.6]
+
+    N, wn = signal.buttord(wp, ws, 3, 16)   # (?)
+
+    # for hardcoded order:
+    # N = order
+
+    b, a = signal.butter(N, wn, btype='low')
+    sf = signal.lfilter(b, a, interval)
+    return sf
+
+def butter_bandpass(interval, sampling_rate, cutoff, order=5):
+    '''
+    Cutoff is f_range, a tuple of floats: length 2.
+    '''
+    sf = butter_highpass(interval, sampling_rate, cutoff[1], order)
+    sf = butter_lowpass(sf, sampling_rate, cutoff[0], order)
+    
+    return sf
 
 # function to find max current of each signal in module
 def max_array(x):

@@ -38,6 +38,16 @@ from patsy import dmatrices
 import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
+# Import time-frequency functions
+from neurodsp.timefrequency import amp_by_time, freq_by_time, phase_by_time
+
+# Import utilities for loading and plotting data
+from neurodsp.utils import create_times
+from neurodsp.utils.download import load_ndsp_data
+from neurodsp.plts.time_series import plot_time_series, plot_instantaneous_measure
+
+from scipy.fft import fft, fftfreq, fftshift
+
 # plot settings
 plt.rcParams.update({'font.size': 30})
 plt.rcParams.update({'lines.linewidth': 5})
@@ -107,7 +117,7 @@ for file in csv_files:
     Fs = 1000e6
     time_fix = np.linspace(time[0], time[time.size - 1],
                            num=int(time.size))
-
+    Fs = 1/(time_fix[1] - time_fix[0])
     # --------Pearson Processing----------
     pear = df['CH1']  # attenuated voltage
     pear_att = att(pear, att_fact_pear)  # voltage
@@ -300,7 +310,11 @@ for file in csv_files:
         sensitivities2[x] = int_peaks2[x] / (pear_peaks2[x] / (0.1))  # V*s/A
     sensitivity2 = np.mean(sensitivities2)
     time_scale = time_fix[1] - time_fix[0]
-    
+
+    plt.figure()
+    plt.plot(time_fix[start:end], sensitivities2)
+    plt.title('Plot of Sensitivities')
+
     '''
     for x in range(0, len(deriv)):
         if (np.isinf(deriv[x])):
@@ -324,41 +338,69 @@ for file in csv_files:
 
     occurrences_of_true = np.where(th == True)
     
-    rogo_cat = rogo2[start:end]
-    for i in range(0,len(occurrences_of_true)):
-        if(occurrences_of_true[i] == True):
-            rogo_cat[i] = 1
     
+    rogo_cat = rogo2[start:end]
+    print(np.size(rogo_cat))
+    if(len(occurrences_of_true) > 1):
+        for i in range(0,len(occurrences_of_true)):
+            if(occurrences_of_true[i][0] < (np.size(rogo_cat) - 1)):
+                if(occurrences_of_true[i] == True):
+                    rogo_cat[occurrences_of_true[i][0]] = 10
+                    rogo_cat = rogo_cat[:-1]
+                    print('Place:', occurrences_of_true[i][0])
+    elif(len(occurrences_of_true) == 1):
+        if(occurrences_of_true[0][0] < np.size(rogo_cat) - 1):
+            rogo_cat[occurrences_of_true[0][0]] = 10
+            rogo_cat = rogo_cat[:-1]
+            print('Place:', occurrences_of_true[0][0])
+    print(np.size(rogo_cat))
     th = rogo2[start:end] == (0)
     th[1:][th[:-1] & th[1:]] = False
     #th = np.flip(th)
-
+    
     occurrences_of_true = np.where(th == True)
-    
-    for i in range(0,len(occurrences_of_true)):
-        if(occurrences_of_true[i] == True):
-            rogo_cat[i] = 0
-    
+    if(len(occurrences_of_true) > 0):
+        for i in range(0,len(occurrences_of_true)):
+            if(occurrences_of_true[i] < np.size(rogo_cat) - 1):
+                if(occurrences_of_true[i][0] == True):
+                    rogo_cat[occurrences_of_true[i][0]] = 0
+                    rogo_cat = rogo_cat[:-1]
+    elif(len(occurrences_of_true) == 1):
+        if(occurrences_of_true[0][0] < np.size(rogo_cat) - 1):
+            rogo_cat[occurrences_of_true[0][0]] = 0
+            rogo_cat = rogo_cat[:-1]
+    print(np.size(rogo_cat))
     th = rogo2[start:end] < (0)
     th[1:][th[:-1] & th[1:]] = False
     #th = np.flip(th)
-
+    int_fft = np.fft.fft(int_rogo2[start:end])
     occurrences_of_true = np.where(th == True)
     
-    for i in range(0,len(occurrences_of_true)):
-        if(occurrences_of_true[i] == True):
-            rogo_cat[i] = -1
-    
-    X = np.row_stack([rogo2[start:end], int_rogo2[start:end], rogo_cat])
+    if(len(occurrences_of_true) > 1):
+        for i in range(0,len(occurrences_of_true)):
+            if(occurrences_of_true[i] < np.size(rogo_cat) - 1):
+                if(occurrences_of_true[i][0] == True):
+                    rogo_cat[occurrences_of_true[i][0]] = -10
+                    rogo_cat = rogo_cat[:-1]
+    elif(len(occurrences_of_true) == 1):
+        if(occurrences_of_true[0][0] < np.size(rogo_cat) - 1):
+            rogo_cat[occurrences_of_true[0][0]] = -10
+            rogo_cat = rogo_cat[:-1]
+    print(np.size(rogo_cat))
+    size = end-start
+    inv_rogo2 = np.reciprocal(int_rogo2[start:end])
+    varis = 5
+    X = np.row_stack([np.abs(rogo2[start:end]), np.abs(int_rogo2[start:end]), 
+                      np.abs(inv_rogo2), np.abs(rogo_cat[0:end]), np.abs(int_fft)])
     if (isinstance(X, list) == True):
         print('Is list')
         X = np.concatenate(X, axis=1)
     else:
         print('IS not list')
     # X = np.concatenate(X,axis=0)
-    X = X.reshape((-1, 3))
+    X = X.reshape((-1, varis))
     
-    X = X.reshape((-1, 3))
+    X = X.reshape((-1, varis))
     y = np.array(sensitivities2)
     '''
     for idx in I:
@@ -370,17 +412,19 @@ for file in csv_files:
     X[:, 0:1] = X[I, 0]
     X[:, 1:2] = X[I, 1]
     X[:, 2:3] = X[I, 2]
+    X[:, 3:4] = X[I, 3]
+    X[:, 4:5] = X[I, 4]
     # y = y.reshape((-1,1))
     # y = np.concatenate(y, axis=0)
     y = np.reshape(y, (-1, 1))
-    X = np.reshape(X, (-1, 3))
+    X = np.reshape(X, (-1, varis))
     regr = linear_model.LinearRegression()
     print('X type:', type(X))
     print('y type:', type(y))
     '''
     Degree of Polynomial regression
     '''
-    poly3 = PolynomialFeatures(degree=15)
+    poly3 = PolynomialFeatures(degree=5)
     Xt3 = poly3.fit_transform(X)
     regr.fit(Xt3, y)
     Coefs = regr.coef_
@@ -403,13 +447,13 @@ for file in csv_files:
     X_rogo = X_rogo.ravel()
     Xrogo_size = np.size(X_rogo)
     print('Rogo size: ', Xrogo_size)
-
+        
     print('y size: ', y.size)
     y_raveled = y.ravel()
     plt.scatter(X_rogo, y_raveled)  # ,'r')
     y_hat_raveled = y_hat.ravel()
     plt.plot(X_rogo, y_hat_raveled, 'b')
-    ax.margins(x=0,y=0)
+    ax.margins(x= 0,y= 0)
     
     
     
@@ -449,6 +493,8 @@ for file in csv_files:
     plt.title('Ridge Analysis')
     plt.plot(X_rogo, yR, 'b')
     plt.scatter(X_rogo, y)  # ,'r')
+    
+    #plt.show()
     '''
     sensitivities3 = int_peaks3
     for x in range(0, len(int_peaks3)):
@@ -472,9 +518,57 @@ for file in csv_files:
     sense_array3.append(sensitivity3)
     sense_array4.append(sensitivity4)
     '''
-
-    '''
+    sig = np.asarray(rogo2)
+    yf = fft(sig)
+    N = np.size(time_fix)
+    xf = fftfreq(N, 1/Fs)
+    plt.figure()
+    plt.plot(xf, np.abs(yf))
+    plt.title('FFT of data')
     
+    
+    
+    # Compute instantaneous frequency from a signal
+    f_range = (18000,43000)
+    sig = np.asarray(rogo2[start:end])
+    '''
+    Create a bandpass filter here
+    '''
+    #sig = butter_bandpass(rogo2[start:end], Fs, f_range, order= 9)
+    '''
+    i_f = freq_by_time(sig, Fs, f_range)     #, f_range= f_range)
+
+    # Plot example signal
+    plt.figure()
+    _, axs = plt.subplots(2, 1, figsize=(15, 9))
+    plot_time_series(time_fix[start:end], sig, 'Raw Signal', xlabel=None, ax=axs[0])
+    
+    
+    plot_time_series(time_fix, sig_filt_true, labels='Beta Filtered Signal', 
+                     colors='b', xlim=[4, 5], xlabel=None, ax=axs[1])
+    
+    
+    plot_instantaneous_measure(time_fix[start:end], i_f, 'frequency', 
+                               label='Instantaneous Frequency',
+                               colors='r', 
+                               ax=axs[1])
+    '''
+    fig, ax = plt.subplots(2, figsize=(8, 7))
+    f, t, Sxx = signal.spectrogram(rogo2[start:end], Fs, mode='magnitude')
+    ax[0].pcolormesh(t, f, Sxx)
+    ax[0].set_ylabel('Frequency [Hz]')
+    ax[0].set_xlabel('Time [sec]')
+    
+    
+    f, t, Sxx = signal.spectrogram(rogo2[start:end], Fs,
+                                   mode='magnitude',return_onesided=False)
+    ax[1].pcolormesh(t, fftshift(f), fftshift(Sxx, axes=0))
+    ax[1].set_ylabel('Frequency [Hz]')
+    ax[1].set_xlabel('Time [sec]')
+    plt.savefig("Spectrogram.png")
+    
+    
+    '''
     #---------------Plotting---------------------
     '''
     plt.figure()
