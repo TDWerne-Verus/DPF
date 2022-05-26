@@ -1,7 +1,5 @@
 
-# -*- coding: utf-8 -*-
-import numpy as np
-import pandas as pd
+
 
 # -*- coding: utf-8 -*-
 """
@@ -18,6 +16,7 @@ import os
 import glob
 import matplotlib.pyplot as plt
 from matplotlib.axis import Axis
+
 
 from scipy.signal import find_peaks
 from scipy.integrate import quad
@@ -134,6 +133,7 @@ def addition(a,b,c):
 
     return addition
 
+
 #function to integrate the raw voltage data collected from the Rogowski coil
 def integration(data):
     '''
@@ -164,6 +164,7 @@ def checksum(csv_files, path):
     fid.close()
     return 0
 
+
 #function to add 40dB attenuation
 def att(data):
     attenuation = 100 #40dB
@@ -193,5 +194,5 @@ def integration(data, time, sense):
     volt_int = integrate.cumtrapz(tmp_y_arr, tmp_x_arr, initial = 0) #V
 
     int_curr = volt_int/sense   #A/s
-    return int_curr
     
+    return int_curr

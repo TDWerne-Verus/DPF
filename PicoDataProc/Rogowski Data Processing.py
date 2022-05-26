@@ -16,11 +16,13 @@ import matplotlib.pyplot as plt
 from matplotlib.axis import Axis
 from matplotlib.figure import Figure
 from scipy.signal import find_peaks
+
 from scipy.integrate import quad
 import hashlib
 import ntpath
 import datetime
 from RogowskiDataProcessingFunctions import *
+
 from scipy import signal
 from scipy import integrate
 import scipy.integrate as integrate
@@ -61,6 +63,7 @@ checksum(csv_files, path)
 # End of checksum function
 
 
+
 n = 0
 #loop over the list of csv files
 for file in csv_files:
@@ -68,7 +71,6 @@ for file in csv_files:
     data = pd.read_csv(file) 
     count = count+1
     print(file)
-    #setting variables to current channels
     df = pd.DataFrame(data, columns= ['index','time','A','B','C','D','E','F','G','H'])
 
     time = df['time']
@@ -107,7 +109,6 @@ for file in csv_files:
     N2C_filt = filter(N2C)
     N1C_filt = filter(N1C)
     N3W_filt = filter(N3W)
-
     #Integrate to get current
     N3E_int = integration(N3E_filt, time, sensitivity)
     S2C_int = integration(S2C_filt, time, sensitivity)
@@ -150,12 +151,11 @@ for file in csv_files:
     print('N2C to N3C %f' %dif23)
     print('N1C to N3C %f' %dif13)'''
 
-    
     (Adding new channels for full analysis)
     #plot column arrays
     
     #Plot filtered raw data
-    (Integration)
+    
     #fig, ax1 = plt.subplots()
     #plt.grid(True)
     #plt.xlim(0,2e-5)
@@ -208,12 +208,11 @@ for file in csv_files:
     #distribution(east_curr, center, west)
     plt.legend(['East Current','Center Current','West Current'])
     '''
-    
-    
     #Write data to Excel
     '''df = DataFrame({'N3 East': peaks[0]})
     print(df)
     df.to_excel('test.xlsx',sheet_name = 'sheet1', index = False)'''
+
 
 
 '''
@@ -282,6 +281,72 @@ N12diff = (max(peak_N1C)-max(peak_N2C))*100/ max(peak_N2C)
 N23diff = (max(peak_N2C)-max(peak_N3C))*100/ max(peak_N3C)
 plt.legend(['N1C','N2C','N3C'])'''
 
+
+'''
+plt.figure('All Rogos Shot 13 03292022')
+[R, C] = rogos.size()
+for x in range(0,R-1):
+    plt.plot(time,rogos[n,])
+    
+'''
+
+
+'''
+plt.figure('N3E Coil')
+plt.plot(range(0,count), peak_N3E)
+plt.xlabel('File Index')
+plt.ylabel('Current (A)')
+var = (max(peak_N3E) - min(peak_N3E))*100 / min(peak_N3E)
+print(var)
+plt.legend(['Percent Variation = %6.2f' %var])
+
+#plt.figure('S2C Coil')
+#plt.plot(range(0,count), peak_S2C)
+#plt.xlabel('File Index')
+#plt.ylabel('Current (A)')
+#var = (max(peak_S2C)-min(peak_S2C))*100 /min(peak_S2C)
+#plt.legend(['Percent Variation = %6.2f' %var])
+
+plt.figure('N3C Coil')
+plt.plot(range(0,count), peak_N3C)
+plt.xlabel('File Index')
+plt.ylabel('Current (A)')
+var = (max(peak_N3C)-min(peak_N3C))*100 /min(peak_N3C)
+plt.legend(['Percent Variation = %6.2f' %var])
+
+plt.figure('N2C Coil')
+plt.plot(range(0,count), peak_N2C)
+plt.xlabel('File Index')
+plt.ylabel('Current (A)')
+var = (max(peak_N2C)-min(peak_N2C))*100 /min(peak_N2C)
+plt.legend(['Percent Variation = %6.2f' %var])
+
+plt.figure('N1C Coil')
+plt.plot(range(0,count), peak_N1C)
+plt.xlabel('File Index')
+plt.ylabel('Current (A)')
+var = (max(peak_N1C)-min(peak_N1C))*100 /min(peak_N1C)
+plt.legend(['Percent Variation = %6.2f' %var])
+
+plt.figure('N3W Coil')
+plt.plot(range(0,count), peak_N3W)
+plt.xlabel('File Index')
+plt.ylabel('Current (A)')
+var = (max(peak_N3W)-min(peak_N3W))*100 /min(peak_N3W)
+plt.legend(['Percent Variation = %6.2f' %var])
+
+'''
+'''
+plt.figure('Scaled Current Comparisons')
+plt.plot(range(1,count+1), peak_N1C, range(1,count+1), peak_N2C, range(1,count+1), peak_N3C)
+plt.xlabel('File Index')
+plt.ylabel('Current (A)')
+varN1C = (max(peak_N1C)-min(peak_N1C))*100 /min(peak_N1C)
+varN2C = (max(peak_N2C)-min(peak_N2C))*100 /min(peak_N2C)
+varN3C = (max(peak_N3C)-min(peak_N3C))*100 /min(peak_N3C)
+N12diff = (max(peak_N1C)-max(peak_N2C))*100/ max(peak_N2C)
+N23diff = (max(peak_N2C)-max(peak_N3C))*100/ max(peak_N3C)
+plt.legend(['N1C','N2C','N3C'])'''
 
 plt.show()
   
