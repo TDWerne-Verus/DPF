@@ -127,6 +127,7 @@ for file in csv_files:
         for x in range(len(int_rogo)):
             rogo_curr.append(int_rogo[x] / 4)  # divided by 4 loops
             # slow we can make faster by not dynamically allocating
+
         int_peak = find_peak(rogo_curr)
         # matches = (x for x in rogo_curr if x > 0.95*max(rogo_curr))
         # peak of integrated current

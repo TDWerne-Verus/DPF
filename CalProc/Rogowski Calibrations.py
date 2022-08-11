@@ -138,7 +138,7 @@ for file in csv_files:
     if(rogo2[0] > 0.001):
         rogo2[0] = rogo2[1]
     '''
-    int_rogo2 = integration(rogo2, 1, time_fix, 1)  # K*I
+    int_rogo2 = integrate(rogo2, 1, time_fix, 1)  # K*I
     for x in range(len(int_rogo2)):
         rogo_curr2.append(int_rogo2[x] / 4)  # divided by 4 loops
     # int_peak2 = find_peak(rogo_curr2)                      #peak of integrated current
@@ -172,6 +172,8 @@ for file in csv_files:
 
     if (isinstance(occurrences_of_true, int)):
         end_rev = occurrences_of_true
+    elif not occurrences_of_true:
+        end_rev = 0
     else:
         end_rev = occurrences_of_true[0][0]
         if (end_rev == 0):
